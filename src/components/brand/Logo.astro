@@ -1,0 +1,50 @@
+---
+// Знак (градиент Data Cyan → Signal Blue) и надпись VILAX (цвет текста). Без фиолетового.
+import { MARK_PATH, WORD_PATH } from './logo-paths';
+
+interface Props {
+  /** Уникальный id градиента на странице. */
+  id: string;
+  /** Показывать надпись рядом со знаком. */
+  word?: boolean;
+  class?: string;
+}
+
+const { id, word = true, class: cls } = Astro.props;
+const grad = `vlx-g-${id}`;
+---
+
+<span class:list={['logo', cls]}>
+  <svg class="logo__mark" viewBox="184 170 712 608" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id={grad} gradientUnits="userSpaceOnUse" x1="184" y1="0" x2="896" y2="0">
+        <stop offset="0" stop-color="#18F2DF"></stop>
+        <stop offset="1" stop-color="#2297FF"></stop>
+      </linearGradient>
+    </defs>
+    <path fill={`url(#${grad})`} d={MARK_PATH}></path>
+  </svg>
+  {
+    word && (
+      <svg class="logo__word" viewBox="328 846 424 64" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d={WORD_PATH} />
+      </svg>
+    )
+  }
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo__mark {
+    width: 30px;
+    height: 26px;
+  }
+  .logo__word {
+    width: 68px;
+    height: 10px;
+  }
+</style>

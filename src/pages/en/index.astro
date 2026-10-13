@@ -1,0 +1,21 @@
+---
+import Version from '../../layouts/Version.astro';
+import { homePath } from '../../lib/site';
+import Home from '../../components/home/Home.astro';
+import { ui } from '../../i18n';
+import { organizationLd, softwareLd } from '../../lib/seo';
+
+const t = ui('en');
+---
+
+<Version
+  lang="en"
+  title={t.meta.title}
+  description={t.meta.description}
+  path={homePath('en')}
+  alternates={{ ru: homePath('ru'), en: homePath('en') }}
+  overHero
+  jsonLd={[organizationLd(), softwareLd('en', t.meta.description)]}
+>
+  <Home lang="en" />
+</Version>

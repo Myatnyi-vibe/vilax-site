@@ -1,0 +1,14 @@
+{
+  "order": ["hero", "fusion", "platform", "blocks", "ai", "integrations", "onboarding", "pricing", "cases", "faq", "cta"],
+  "enabled": { "ai": true, "integrations": true, "cases": false, "faq": true },
+  "anchors": { "platform": "platform", "pricing": "pricing", "onboarding": "onboarding", "faq": "faq" },
+  "titles": {
+    "platform": "Platform",
+    "ai": "AI inside",
+    "integrations": "Integrations",
+    "onboarding": "Getting started",
+    "pricing": "Pricing",
+    "cases": "Customers",
+    "faq": "FAQ"
+  }
+}

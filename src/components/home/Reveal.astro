@@ -1,0 +1,31 @@
+---
+// Появление элементов с [data-reveal] при прокрутке: один IntersectionObserver на страницу, один раз на элемент.
+// Задержка — style="--reveal-delay: 80ms" у элемента. Правила анимации — в base.css (.reveal-on [data-reveal]).
+---
+
+<script>
+  const root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const items = [...document.querySelectorAll<HTMLElement>('[data-reveal]')];
+  if (!reduce && items.length && 'IntersectionObserver' in window) {
+    // что уже на экране при загрузке, не прячем — иначе мигнёт
+    const fold = window.innerHeight;
+    items.forEach((el) => {
+      if (el.getBoundingClientRect().top < fold) el.classList.add('is-in');
+    });
+    root.classList.add('reveal-on');
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      },
+      { rootMargin: '0px 0px -12% 0px' },
+    );
+    items.forEach((el) => {
+      if (!el.classList.contains('is-in')) io.observe(el);
+    });
+  }
+</script>

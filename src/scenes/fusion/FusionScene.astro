@@ -1,0 +1,513 @@
+---
+// Секция 2 «Сцена слияния» (SITE-12, SITE-2): «Так сетью управляют сегодня» — пять болей по очереди,
+// одно окно забирает всё и складывается в чистый знак VILAX, под ним «Всё это — VILAX». Решение владельца 10.10.2026.
+// Тексты — словарь B (fusion.json: lead, items, merge, final), обычный HTML; холст и окно скрыты от дикторов.
+// Режимы (data-mode): 3d — компьютер; flat — телефон (Р-3); still — «меньше движения», экономия трафика, нет WebGL.
+// Без скриптов — список, фраза и знак обычным текстом.
+import { MARK_PATH } from '../../components/brand/logo-paths';
+import ruFusion from '../../content/ru/fusion.json';
+import enFusion from '../../content/en/fusion.json';
+import type { Lang } from '../../i18n';
+import { typo } from '../../lib/typo';
+
+interface Props {
+  lang: Lang;
+}
+
+interface FusionCopy {
+  lead?: string;
+  items?: string[];
+  merge?: string;
+  final: string;
+}
+
+const { lang } = Astro.props;
+const t = (lang === 'ru' ? ruFusion : enFusion) as FusionCopy;
+const items = t.items ?? [];
+const grad = lang === 'en' ? ['#2297FF', '#0B6BCB'] : ['#18F2DF', '#2297FF'];
+---
+
+<section class="fusion" id="fusion" data-fusion data-version={lang} aria-labelledby="fusion-title">
+  <div class="fusion__stage">
+    <canvas class="fusion__canvas" aria-hidden="true"></canvas>
+    <div class="fusion__window" aria-hidden="true"></div>
+    <svg class="fusion__fold" viewBox="184 170 712 608" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="fold-g" gradientUnits="userSpaceOnUse" x1="184" y1="0" x2="896" y2="0">
+          <stop offset="0" stop-color={grad[0]}></stop>
+          <stop offset="1" stop-color={grad[1]}></stop>
+        </linearGradient>
+      </defs>
+      <path class="fold-fill"></path>
+      <path class="fold-body"></path>
+      <path class="fold-brand"></path>
+      <path class="fold-top"></path>
+    </svg>
+    <svg class="fusion__mark" viewBox="184 170 712 608" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="fusion-g" gradientUnits="userSpaceOnUse" x1="184" y1="0" x2="896" y2="0">
+          <stop offset="0" stop-color={grad[0]}></stop>
+          <stop offset="1" stop-color={grad[1]}></stop>
+        </linearGradient>
+      </defs>
+      <path fill="url(#fusion-g)" d={MARK_PATH}></path>
+    </svg>
+    <div class="fusion__captions container">
+      <h2 id="fusion-title" class="fusion__lead">{typo(lang, t.lead ?? '')}</h2>
+      <ul class="fusion__list">
+        {items.map((it) => <li class="fusion__item">{typo(lang, it)}</li>)}
+      </ul>
+    </div>
+    {t.merge && <p class="fusion__merge">{typo(lang, t.merge)}</p>}
+    <p class="fusion__final">{typo(lang, t.final)}</p>
+  </div>
+</section>
+
+<script>
+  import { clamp } from './timeline';
+  import type { Version } from './faces';
+
+  const section = document.querySelector<HTMLElement>('[data-fusion]');
+  if (section) boot(section);
+
+  function webglAvailable(): boolean {
+    try {
+      const c = document.createElement('canvas');
+      const gl = c.getContext('webgl2') || c.getContext('webgl');
+      (gl as WebGLRenderingContext | null)?.getExtension('WEBGL_lose_context')?.loseContext();
+      return !!gl;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Обложка успокоилась (нити сошлись) или прошло 4 с — затем свободное время браузера. */
+  function afterCover(): Promise<void> {
+    return new Promise((resolve) => {
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback;
+        if (idle) idle(() => resolve(), { timeout: 1500 });
+        else setTimeout(resolve, 200);
+      };
+      if (document.documentElement.dataset.heroSettled !== undefined) go();
+      window.addEventListener('vilax:hero-settled', go, { once: true });
+      setTimeout(go, 4000);
+    });
+  }
+
+  function boot(section: HTMLElement) {
+    const version = (section.dataset.version === 'en' ? 'en' : 'ru') as Version;
+    const pastLevel = version === 'en' ? 0.62 : 0.5;
+    const stage = section.querySelector<HTMLElement>('.fusion__stage')!;
+    const canvas = section.querySelector<HTMLCanvasElement>('.fusion__canvas')!;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+    const phone = matchMedia('(max-width: 767px), (hover: none) and (pointer: coarse)').matches;
+    const mode = reduce || saveData ? 'still' : phone ? 'flat' : webglAvailable() ? '3d' : 'still';
+    section.dataset.mode = mode;
+    if (mode === 'still') return;
+
+    let frame: ((p: number) => void) | null = null;
+    /** Запасной вид: снять покадровые стили со слоёв и показать «до → после». */
+    const toStill = () => {
+      frame = null;
+      stage.querySelectorAll<HTMLElement>('.fusion__lead, .fusion__item, .fusion__merge, .fusion__final, .fusion__mark, .fusion__window, .fusion__fold, .fx-layer').forEach((el) => {
+        if (el.classList.contains('fx-layer')) el.remove();
+        else el.removeAttribute('style');
+      });
+      section.dataset.mode = 'still';
+    };
+    let overlaps: ((p: number) => number) | null = null;
+    let onResize: (() => void) | null = null;
+    let raf = 0;
+    let visible = false;
+    let smooth = -1;
+    let last = 0;
+    let seekTo = -1;
+    const slow: number[] = [];
+    let lowered = false;
+
+    const tick = (now: number) => {
+      if (!visible || !frame) {
+        raf = 0;
+        return;
+      }
+      const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 1 / 60;
+      last = now;
+      let drew = false;
+      if (seekTo < 0) {
+        const r = section.getBoundingClientRect();
+        const raw = clamp(-r.top / Math.max(1, r.height - window.innerHeight));
+        // «хвост» удержания (жалоба «знак уезжает сразу»): в 3d вся хореография идёт за первые ACTION прокрутки,
+        // дальше p=1 — собранный знак VILAX держится ~1,5 экрана, прежде чем эстафета секции 3.
+        const ACTION = 0.64;
+        const target = mode === '3d' ? (raw <= ACTION ? raw / ACTION : 1) : raw;
+        const next = smooth < 0 ? target : smooth + (target - smooth) * (1 - Math.exp(-dt * 7));
+        // кадр рисуется, только когда сцена сдвинулась: в покое ни одного лишнего кадра
+        if (smooth < 0 || Math.abs(next - smooth) > 1e-5) {
+          smooth = next;
+          frame(smooth);
+          drew = true;
+        }
+      }
+      // скорость меряем только по кадрам, которые рисовали: кадры покоя ничего не стоят и не разбавляют среднее
+      if (mode === '3d' && !lowered && drew) {
+        slow.push(dt);
+        if (slow.length >= 90) {
+          const avg = slow.reduce((s, x) => s + x, 0) / slow.length;
+          slow.length = 0;
+          if (avg > 0.022) {
+            lowered = true;
+            section.dispatchEvent(new CustomEvent('fusion:lower'));
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    const start = () => {
+      if (!raf && frame) {
+        last = 0;
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
+    async function init() {
+      if (mode === '3d') {
+        const [{ createFusionScene }, { applyLayers, findLayers }] = await Promise.all([import('./scene3d'), import('./layers')]);
+        const layers = findLayers(stage);
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const scene = createFusionScene({ canvas, version, pixelRatio: dpr });
+        frame = (p) => applyLayers(layers, p, scene.render(p), pastLevel);
+        overlaps = scene.overlaps;
+        onResize = () => {
+          scene.resize();
+          if (smooth >= 0) frame?.(smooth);
+        };
+        section.addEventListener('fusion:lower', () => {
+          scene.setPixelRatio(1);
+          if (smooth >= 0) frame?.(smooth);
+        });
+        canvas.addEventListener('webglcontextlost', (e) => {
+          e.preventDefault();
+          scene.dispose();
+          toStill();
+        });
+      } else {
+        const { mountFlat } = await import('./flat');
+        frame = mountFlat(stage, version, pastLevel);
+        onResize = () => {
+          if (smooth >= 0) frame?.(smooth);
+        };
+      }
+      section.dataset.ready = '';
+      start();
+      // Только local и preview: перемотка и проверка пересечений для снимков (window.__fusion).
+      if (document.documentElement.dataset.mode !== 'prod') {
+        (window as unknown as { __fusion?: object }).__fusion = {
+          seek(p: number) {
+            seekTo = p;
+            frame?.(p);
+          },
+          release() {
+            seekTo = -1;
+          },
+          overlaps: (p: number) => overlaps?.(p) ?? 0,
+        };
+      }
+    }
+
+    // Сцена (three.js, ~150 КБ) грузится после обложки и в свободное время, когда человек начал листать к ней.
+    let started = false;
+    const near = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || started) return;
+        started = true;
+        near.disconnect();
+        afterCover()
+          .then(init)
+          .catch(toStill);
+      },
+      // секция уже на 10 % в экране — значит, человек начал листать обложку; без прокрутки three.js не грузится
+      { rootMargin: '0px 0px -10% 0px' },
+    );
+    near.observe(section);
+    new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible) start();
+    }).observe(section);
+    new ResizeObserver(() => onResize?.()).observe(stage);
+  }
+</script>
+
+<style>
+  .fusion {
+    position: relative;
+    background: var(--canvas);
+    --win-bg: var(--surface-1);
+    --win-border: var(--hairline-strong);
+    --win-shadow: none;
+  }
+  :global([data-theme='en']) .fusion {
+    --win-bg: #ffffff;
+    --win-shadow: 0 1px 2px rgb(2 8 23 / 0.04), 0 12px 32px rgb(2 8 23 / 0.06);
+  }
+
+  /* ---- без скриптов и «до → после»: список и фраза слева, знак и финал справа ---- */
+  .fusion__stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'caps mark'
+      'merge final';
+    column-gap: var(--sp-9);
+    row-gap: var(--sp-5);
+    align-items: center;
+    max-width: calc(var(--container) + 2 * var(--gutter));
+    margin-inline: auto;
+    padding: var(--sp-9) var(--gutter);
+  }
+  .fusion__canvas,
+  .fusion__window,
+  .fusion__fold {
+    display: none;
+  }
+  .fusion__captions {
+    grid-area: caps;
+    padding: 0;
+  }
+  .fusion__lead {
+    font-size: var(--fs-body-lg);
+    font-weight: 500;
+    color: var(--ink-subtle);
+    margin-bottom: var(--sp-3);
+  }
+  .fusion__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .fusion__item {
+    font-size: clamp(1.625rem, 2.4vw, 2.125rem);
+    line-height: 1.12;
+    font-weight: var(--display-weight);
+    letter-spacing: -0.022em;
+    color: var(--ink);
+  }
+  .fusion__merge,
+  .fusion__final {
+    font-size: var(--fs-display-md);
+    line-height: 1.1;
+    font-weight: var(--display-weight);
+    letter-spacing: -0.025em;
+    text-align: center;
+  }
+  .fusion__merge {
+    grid-area: merge;
+    text-align: left;
+    font-size: var(--fs-headline);
+  }
+  .fusion__final {
+    grid-area: final;
+  }
+  .fusion__mark {
+    grid-area: mark;
+    justify-self: center;
+    width: min(64%, 320px);
+    height: auto;
+  }
+
+  /* ---- живые режимы: закреплённая сцена ---- */
+  .fusion[data-mode='3d'] {
+    /* 560vh: ~294vh на хореографию (ACTION 0.64) + ~1,6 экрана удержания собранного знака */
+    height: 560vh;
+  }
+  .fusion[data-mode='flat'] {
+    height: 320vh;
+  }
+  .fusion[data-mode='3d'] .fusion__stage,
+  .fusion[data-mode='flat'] .fusion__stage {
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 100dvh;
+    max-width: none;
+    padding: 0;
+    overflow: hidden;
+  }
+  .fusion[data-mode='3d'] .fusion__canvas {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .fusion[data-mode='3d'] .fusion__window,
+  .fusion[data-mode='flat'] .fusion__window {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    top: 0;
+    width: 640px;
+    height: 400px;
+    transform-origin: 0 0;
+    border-radius: calc(20px / var(--k, 1));
+    border: calc(1px / var(--k, 1)) solid var(--win-border);
+    background: var(--win-bg);
+    box-shadow: var(--win-shadow);
+    visibility: hidden;
+    pointer-events: none;
+  }
+  /* одна линия заголовка — больше в окне ничего нет */
+  .fusion[data-mode='3d'] .fusion__window::after,
+  .fusion[data-mode='flat'] .fusion__window::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(40px / var(--k, 1));
+    height: calc(1px / var(--k, 1));
+    background: var(--hairline);
+  }
+  .fusion[data-mode='3d'] .fusion__fold,
+  .fusion[data-mode='flat'] .fusion__fold {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    top: 0;
+    overflow: visible;
+    transform-origin: 0 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .fold-fill {
+    fill: var(--win-bg);
+    stroke: none;
+  }
+  .fold-body,
+  .fold-top {
+    fill: none;
+    stroke: var(--win-border);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+  .fold-brand {
+    fill: none;
+    stroke: url(#fold-g);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+  .fusion[data-mode='3d'] .fusion__mark,
+  .fusion[data-mode='flat'] .fusion__mark {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    opacity: 0;
+    transform-origin: 0 0;
+    pointer-events: none;
+    /* знак проявляется от кончиков нитей к вершине */
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--rv, 0) * 115% - 15%), transparent calc(var(--rv, 0) * 115%));
+    mask-image: linear-gradient(to bottom, #000 calc(var(--rv, 0) * 115% - 15%), transparent calc(var(--rv, 0) * 115%));
+  }
+  .fusion[data-mode='3d'] .fusion__captions,
+  .fusion[data-mode='flat'] .fusion__captions {
+    position: absolute;
+    z-index: 4;
+    left: 0;
+    right: 0;
+    top: calc(var(--header-h) + var(--sp-6));
+    padding-inline: var(--gutter);
+    pointer-events: none;
+  }
+  .fusion[data-mode='3d'] .fusion__captions > * {
+    max-width: min(46vw, 560px);
+  }
+  /* пока сцена грузится, список виден целиком; покадрово им управляет сцена после [data-ready] */
+  .fusion[data-mode='3d'][data-ready] .fusion__item,
+  .fusion[data-mode='flat'][data-ready] .fusion__item {
+    opacity: 0;
+  }
+  .fusion[data-mode='3d'] .fusion__merge,
+  .fusion[data-mode='3d'] .fusion__final,
+  .fusion[data-mode='flat'] .fusion__merge,
+  .fusion[data-mode='flat'] .fusion__final {
+    position: absolute;
+    z-index: 4;
+    left: 0;
+    top: 0;
+    width: max-content;
+    max-width: calc(100vw - 2 * var(--gutter));
+    margin: 0;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .fusion[data-mode='3d'] .fusion__merge,
+  .fusion[data-mode='flat'] .fusion__merge {
+    font-size: var(--fs-headline);
+  }
+  .fusion[data-mode='3d'] .fusion__merge,
+  .fusion[data-mode='3d'] .fusion__final {
+    text-shadow:
+      0 0 12px rgb(var(--canvas-rgb) / 0.95),
+      0 2px 24px rgb(var(--canvas-rgb) / 0.9);
+  }
+  /* мягкая подложка под список, чтобы текст читался поверх предметов */
+  .fusion[data-mode='3d'] .fusion__stage::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    inset: 0 auto auto 0;
+    width: min(62vw, 820px);
+    height: 62vh;
+    background: radial-gradient(80% 90% at 10% 20%, rgb(var(--canvas-rgb) / 0.85), rgb(var(--canvas-rgb) / 0) 70%);
+    pointer-events: none;
+  }
+
+  /* ---- телефон ---- */
+  .fusion[data-mode='flat'] .fusion__stage :global(.fx-layer) {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .fusion[data-mode='flat'] .fusion__stage :global(.fx-chip) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 3px;
+    box-shadow: 0 6px 18px rgb(2 8 23 / 0.28);
+    will-change: transform, opacity;
+  }
+  .fusion[data-mode='flat'] .fusion__captions {
+    top: calc(var(--header-h) + var(--sp-5) + var(--badge-space, 0px));
+  }
+  .fusion[data-mode='flat'] .fusion__lead {
+    font-size: 0.9375rem;
+  }
+  .fusion[data-mode='flat'] .fusion__item {
+    font-size: 1.375rem;
+    line-height: 1.15;
+  }
+  .fusion[data-mode='flat'] .fusion__final {
+    font-size: var(--fs-headline);
+  }
+
+  @media (max-width: 767px) {
+    .fusion__stage {
+      grid-template-columns: 1fr;
+      grid-template-areas: 'caps' 'merge' 'mark' 'final';
+      padding-block: var(--sp-8);
+    }
+  }
+</style>

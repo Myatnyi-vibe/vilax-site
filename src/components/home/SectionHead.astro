@@ -1,0 +1,51 @@
+---
+// Заголовок секции главной: h2 и вводный абзац. Без надзаголовков и номеров секций (DESIGN.md → «Не делаем»).
+// Тексты уже прошли typo() у вызывающего или проходят здесь — передавайте как есть из словаря.
+import { typo } from '../../lib/typo';
+import type { Lang } from '../../i18n';
+
+interface Props {
+  lang: Lang;
+  /** id заголовка — для aria-labelledby секции. */
+  id: string;
+  title: string;
+  lead?: string;
+  /** Крупнее для первых секций и финального призыва. */
+  size?: 'md' | 'lg';
+  class?: string;
+}
+
+const { lang, id, title, lead, size = 'md', class: cls } = Astro.props;
+---
+
+<header class:list={['sh', `sh--${size}`, cls]}>
+  <h2 id={id} class="sh__title">{typo(lang, title)}</h2>
+  {lead && <p class="sh__lead">{typo(lang, lead)}</p>}
+</header>
+
+<style>
+  .sh {
+    display: grid;
+    gap: var(--sp-4);
+    max-width: 760px;
+  }
+  .sh__title {
+    font-size: var(--fs-display-md);
+    line-height: 1.1;
+    font-weight: var(--display-weight);
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  .sh--lg .sh__title {
+    font-size: var(--fs-display-lg);
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+  }
+  .sh__lead {
+    max-width: 56ch;
+    font-size: var(--fs-body-lg);
+    line-height: 1.5;
+    color: var(--ink-muted);
+    text-wrap: pretty;
+  }
+</style>

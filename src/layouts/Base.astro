@@ -1,0 +1,76 @@
+---
+// Общий каркас страницы: язык, тема, мета, canonical, hreflang, Open Graph, шрифты. Видимых строк здесь нет.
+import '../themes/base.css';
+import '../themes/ru.css';
+import '../themes/en.css';
+import { NOINDEX, MODE } from '../lib/mode';
+import { ui, type Lang } from '../i18n';
+import { url } from '../lib/site';
+
+interface Props {
+  /** Язык страницы; у экрана выбора и 404 — 'x' (обе версии). */
+  lang: Lang | 'x';
+  title: string;
+  description: string;
+  /** Путь страницы от корня с подпутём сборки (url() из lib/site), например '/ru/' или '/privacy'. */
+  path: string;
+  /** canonical, если отличается от path (адреса-синонимы вроде /en/privacy). */
+  canonicalPath?: string;
+  /** Пара версий для hreflang: { ru: '/ru/', en: '/en/' }. x-default — экран выбора. */
+  alternates?: Partial<Record<Lang, string>>;
+  theme?: Lang;
+  noindex?: boolean;
+  /** Разметка schema.org (JSON-LD). */
+  jsonLd?: object[];
+}
+
+const { lang, title, description, path, canonicalPath, alternates, theme, noindex = false, jsonLd = [] } = Astro.props;
+const site = Astro.site!;
+const canonical = new URL(canonicalPath ?? path, site).href;
+const htmlLang = lang === 'x' ? 'en' : lang;
+const themeName: Lang = theme ?? (lang === 'en' ? 'en' : 'ru');
+// Явный noindex страницы (экран выбора, 404, адреса-синонимы) оставляет follow —
+// поисковик не индексирует страницу, но идёт по ссылкам на /ru/ и /en/. Режим превью/локалки закрыт целиком.
+const robots = noindex ? 'noindex, follow' : NOINDEX ? 'noindex, nofollow' : 'index, follow';
+const ogLang = lang === 'x' ? 'x' : lang;
+const ogImage = new URL(url(`/og/${ogLang}.png`), site).href;
+const ogAlt = ui(lang === 'x' ? 'en' : lang).meta.ogAlt;
+const fonts = lang === 'en' ? ['inter-latin'] : ['inter-latin', 'inter-cyrillic'];
+const themeColor = themeName === 'en' ? '#F5F7FA' : '#020817';
+---
+
+<!doctype html>
+<html lang={htmlLang} data-theme={themeName} data-mode={MODE}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content={robots} />
+    <meta name="theme-color" content={themeColor} />
+    <link rel="canonical" href={canonical} />
+    {alternates?.ru && <link rel="alternate" hreflang="ru" href={new URL(alternates.ru, site).href} />}
+    {alternates?.en && <link rel="alternate" hreflang="en" href={new URL(alternates.en, site).href} />}
+    {alternates && <link rel="alternate" hreflang="x-default" href={new URL(url('/'), site).href} />}
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <link rel="icon" href={url('/favicon.ico')} sizes="32x32" />
+    <link rel="apple-touch-icon" href={url('/apple-touch-icon.png')} />
+    {fonts.map((f) => <link rel="preload" href={url(`/fonts/${f}.woff2`)} as="font" type="font/woff2" crossorigin />)}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="VILAX" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogAlt} />
+    {lang !== 'x' && <meta property="og:locale" content={lang === 'ru' ? 'ru_RU' : 'en_US'} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

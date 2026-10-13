@@ -1,0 +1,427 @@
+---
+// Секция 1 «Обложка» (SITE-10, решение панели дизайна 10.10.2026): нити знака VILAX крупно и с обрезкой краями экрана,
+// вершина справа внизу. Одно событие — крылья проявляются от кончиков к вершине (~1,5 с), дальше покой: без дыхания,
+// частиц и свечения. Заголовок виден с первой отрисовки.
+// Ролик «МоушенПро» (этап 8): в рамке экрана справа на компьютере, под текстом на планшете и телефоне (9:16), нити — фон.
+// Сначала всегда кадр-обложка (он же первый кадр ролика); ролик подключается после загрузки страницы, играет по кругу
+// без звука, стоит на паузе, пока обложки нет на экране, есть кнопка паузы. «Меньше движения» и Save-Data — только кадр.
+// Выключатель HERO_VIDEO (src/lib/site.ts): до «да» по роликам — только кадр-обложка.
+// Тексты — словарь B (hero.json); анимация — только CSS, при «меньше движения» знак сразу целиком.
+import ruHero from '../../content/ru/hero.json';
+import enHero from '../../content/en/hero.json';
+import { MARK_PATH } from '../brand/logo-paths';
+import { homePath, HERO_VIDEO, url } from '../../lib/site';
+import { typo } from '../../lib/typo';
+import type { Lang } from '../../i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = lang === 'ru' ? ruHero : enHero;
+const grad = lang === 'en' ? ['#2297FF', '#0B6BCB'] : ['#18F2DF', '#2297FF'];
+// ролик и кадр-обложка своей версии: 16:9 на компьютере и планшете, 9:16 на телефоне
+const media = (f: '16x9' | '9x16') => url(`/video/hero-${lang}-${f}`);
+const PHONE = '(max-width: 767px)';
+---
+
+<section class="hero" data-hero aria-labelledby="hero-title">
+  <div class="hero__strands" aria-hidden="true">
+    {
+      (['left', 'right'] as const).map((side) => (
+        <svg class={`hero__wing hero__wing--${side}`} viewBox="184 170 712 608" focusable="false">
+          <defs>
+            <linearGradient id={`hero-g-${side}`} gradientUnits="userSpaceOnUse" x1="184" y1="0" x2="896" y2="0">
+              <stop offset="0" stop-color={grad[0]} />
+              <stop offset="1" stop-color={grad[1]} />
+            </linearGradient>
+          </defs>
+          <path fill={`url(#hero-g-${side})`} d={MARK_PATH} />
+        </svg>
+      ))
+    }
+  </div>
+  <div class="hero__body container">
+    <div class="hero__text">
+      <p class="hero__eyebrow">{typo(lang, t.eyebrow)}</p>
+      <h1 class="hero__title" id="hero-title">{typo(lang, t.title)}</h1>
+      <p class="hero__sub">{typo(lang, t.subtitle)}</p>
+      <div class="hero__ctas">
+        <a class="btn btn--primary" href="#demo" data-demo="cover">{t.ctaDemo}</a>
+        <a class="btn btn--secondary" href={`${homePath(lang)}#pricing`}>{t.ctaPrices}</a>
+      </div>
+    </div>
+    <figure
+      class="hero__media"
+      data-hero-media
+      data-video={HERO_VIDEO ? '' : undefined}
+      data-src-desk={media('16x9')}
+      data-src-phone={media('9x16')}
+      data-phone={PHONE}
+    >
+      <div class="hero__frame">
+        <div class="hero__screen">
+          <picture>
+            <source media={PHONE} type="image/avif" srcset={`${media('9x16')}.avif`} width="720" height="1280" />
+            <source media={PHONE} type="image/webp" srcset={`${media('9x16')}.webp`} width="720" height="1280" />
+            <source type="image/avif" srcset={`${media('16x9')}.avif`} />
+            <img
+              class="hero__poster"
+              src={`${media('16x9')}.webp`}
+              alt={t.video.label}
+              width="1600"
+              height="900"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </picture>
+          <button
+            class="hero__toggle"
+            type="button"
+            hidden
+            data-hero-toggle
+            data-pause={t.video.pause}
+            data-play={t.video.play}
+            aria-label={t.video.pause}
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path class="hero__ico-pause" d="M5.5 3.5v9M10.5 3.5v9" />
+              <path class="hero__ico-play" d="M5.5 3.2v9.6L12.8 8z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<script>
+  // Ролик: подключается после загрузки страницы, только если он включён и движение не ограничено; кадр-обложка — всегда.
+  const media = document.querySelector<HTMLElement>('[data-hero-media]');
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)');
+  if (media && media.dataset.video !== undefined && !calm.matches && !conn?.saveData) {
+    const mount = () => {
+      const screen = media.querySelector<HTMLElement>('.hero__screen')!;
+      const btn = media.querySelector<HTMLButtonElement>('[data-hero-toggle]')!;
+      const phone = matchMedia(media.dataset.phone || '(max-width: 767px)').matches;
+      const src = (phone ? media.dataset.srcPhone : media.dataset.srcDesk) as string;
+      const v = document.createElement('video');
+      v.className = 'hero__video';
+      v.muted = true;
+      v.defaultMuted = true;
+      v.loop = true;
+      v.playsInline = true;
+      v.preload = 'auto';
+      v.setAttribute('muted', '');
+      v.setAttribute('playsinline', '');
+      v.setAttribute('aria-hidden', 'true');
+      for (const [ext, type] of [
+        ['webm', 'video/webm'],
+        ['mp4', 'video/mp4'],
+      ]) {
+        const s = document.createElement('source');
+        s.src = `${src}.${ext}`;
+        s.type = type;
+        v.append(s);
+      }
+      screen.insertBefore(v, btn);
+      let userPaused = false;
+      let onScreen = true;
+      const sync = () => {
+        if (onScreen && !userPaused && !document.hidden) v.play().catch(() => {});
+        else v.pause();
+        btn.setAttribute('aria-label', (userPaused ? btn.dataset.play : btn.dataset.pause) as string);
+        btn.dataset.state = userPaused ? 'paused' : 'playing';
+      };
+      // кадр-обложка уходит только когда ролик реально пошёл: без мигания пустой рамки
+      v.addEventListener('playing', () => media.setAttribute('data-playing', ''), { once: true });
+      btn.hidden = false;
+      btn.addEventListener('click', () => {
+        userPaused = !userPaused;
+        sync();
+      });
+      new IntersectionObserver(([e]) => {
+        onScreen = e.isIntersecting;
+        sync();
+      }).observe(media.closest('[data-hero]') as HTMLElement);
+      document.addEventListener('visibilitychange', sync);
+      // «меньше движения» включили на ходу — ролик убираем, остаётся кадр-обложка
+      calm.addEventListener('change', (e) => {
+        if (!e.matches) return;
+        v.pause();
+        v.remove();
+        btn.hidden = true;
+        media.removeAttribute('data-playing');
+      });
+      sync();
+    };
+    const idle = (fn: () => void) =>
+      'requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 2000 }) : setTimeout(fn, 300);
+    if (document.readyState === 'complete') idle(mount);
+    else addEventListener('load', () => idle(mount), { once: true });
+  }
+
+  // Нити сошлись — сцена слияния может грузиться в свободное время (FusionScene ждёт это событие).
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(
+    () => {
+      document.documentElement.dataset.heroSettled = '';
+      window.dispatchEvent(new Event('vilax:hero-settled'));
+    },
+    reduce ? 0 : 1700,
+  );
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding-block: calc(var(--header-h) + var(--sp-8)) var(--sp-8);
+    /* одна ступень «лестницы поверхностей», не свечение */
+    background: radial-gradient(48% 60% at 72% 52%, var(--surface-2) 0%, var(--canvas) 72%);
+  }
+  :global([data-theme='en']) .hero {
+    background: radial-gradient(48% 60% at 72% 52%, #ffffff 0%, var(--canvas) 72%);
+  }
+
+  /* знак крупно: ширина 76vw, вершина в (75 %, 96 %), кончики уходят за верхний и правый край */
+  .hero__strands {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    --mark-w: 76vw;
+    --mark-h: calc(var(--mark-w) * 608 / 712);
+    /* полоса шапки свободна от нитей: пункты меню читаются на чистом фоне */
+    -webkit-mask-image: linear-gradient(to bottom, transparent var(--header-h), #000 calc(var(--header-h) + 56px));
+    mask-image: linear-gradient(to bottom, transparent var(--header-h), #000 calc(var(--header-h) + 56px));
+  }
+  .hero__wing {
+    position: absolute;
+    left: calc(75% - var(--mark-w) / 2);
+    top: calc(96% - var(--mark-h));
+    width: var(--mark-w);
+    height: var(--mark-h);
+  }
+  .hero__wing--left {
+    clip-path: inset(0 50% 0 0);
+  }
+  .hero__wing--right {
+    clip-path: inset(0 0 0 50%);
+  }
+  /* подложка под текст: нити уходят под неё, контраст заголовка не страдает */
+  .hero__strands::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgb(var(--canvas-rgb) / 0.92) 0%, rgb(var(--canvas-rgb) / 0.7) 30%, rgb(var(--canvas-rgb) / 0) 55%);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* проявление от кончиков к вершине: полоса маски сползает сверху вниз */
+    .hero__wing {
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 60%);
+      mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 60%);
+      -webkit-mask-size: 100% 250%;
+      mask-size: 100% 250%;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      animation: strands-in 1.35s cubic-bezier(0.65, 0, 0.35, 1) both;
+    }
+    .hero__wing--left {
+      animation-delay: 0.1s;
+    }
+    .hero__wing--right {
+      animation-delay: 0.22s;
+    }
+  }
+  @keyframes strands-in {
+    from {
+      -webkit-mask-position: 0 100%;
+      mask-position: 0 100%;
+    }
+    to {
+      -webkit-mask-position: 0 0;
+      mask-position: 0 0;
+    }
+  }
+
+  .hero__body {
+    position: relative;
+    z-index: 1;
+  }
+  .hero__text {
+    min-width: 0;
+  }
+  .hero__eyebrow {
+    font-size: var(--fs-small);
+    color: var(--ink-subtle);
+    margin-bottom: var(--sp-4);
+  }
+  .hero__title {
+    max-width: 11ch;
+    font-size: clamp(2.75rem, 6vw, 5.375rem);
+    line-height: 1.02;
+    font-weight: var(--display-weight);
+    letter-spacing: -0.035em;
+  }
+  .hero__sub {
+    margin-top: var(--sp-5);
+    max-width: 40ch;
+    font-size: var(--fs-body-lg);
+    color: var(--ink-muted);
+  }
+  .hero__ctas {
+    margin-top: var(--sp-6);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+  }
+
+  /* ролик в рамке экрана: та же рамка, что у снимков системы (Screen.astro), на ступень выше фона */
+  .hero__media {
+    margin: var(--sp-7) 0 0;
+    min-width: 0;
+  }
+  .hero__frame {
+    padding: 6px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+    box-shadow: 0 40px 120px rgb(0 0 0 / 0.35);
+  }
+  :global([data-theme='en']) .hero__frame {
+    background: var(--surface-1);
+    box-shadow:
+      0 1px 2px rgb(2 8 23 / 0.04),
+      0 24px 64px rgb(2 8 23 / 0.1);
+  }
+  .hero__screen {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: calc(var(--r-lg) - 6px);
+    background: var(--canvas);
+  }
+  .hero__poster,
+  .hero__screen :global(.hero__video) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  /* ролик проявляется поверх кадра-обложки, только когда реально пошёл */
+  .hero__screen :global(.hero__video) {
+    opacity: 0;
+    transition: opacity 0.4s var(--ease-ui);
+  }
+  .hero__media[data-playing] :global(.hero__video) {
+    opacity: 1;
+  }
+  .hero__toggle {
+    position: absolute;
+    right: var(--sp-3);
+    bottom: var(--sp-3);
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--r-pill);
+    background: rgb(var(--canvas-rgb) / 0.78);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .hero__toggle[hidden] {
+    display: none;
+  }
+  @media (hover: hover) {
+    .hero__toggle:hover {
+      border-color: var(--ink-subtle);
+      background: rgb(var(--canvas-rgb) / 0.92);
+    }
+  }
+  .hero__toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+  .hero__ico-pause {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+  .hero__ico-play {
+    fill: currentColor;
+    display: none;
+  }
+  .hero__toggle[data-state='paused'] .hero__ico-pause {
+    display: none;
+  }
+  .hero__toggle[data-state='paused'] .hero__ico-play {
+    display: inline;
+  }
+
+  /* компьютер: текст — 5 колонок слева, ролик — 7 справа, по центру первого экрана; нити остаются фоном */
+  @media (min-width: 1024px) {
+    .hero {
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      padding-block: calc(var(--header-h) + var(--sp-7)) var(--sp-8);
+    }
+    .hero__body {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--sp-5);
+      align-items: center;
+    }
+    .hero__text {
+      grid-column: 1 / span 5;
+    }
+    .hero__media {
+      grid-column: 6 / -1;
+      margin: 0;
+    }
+    .hero__title {
+      max-width: 12ch;
+      font-size: clamp(2.75rem, 4.5vw, 4.75rem);
+    }
+  }
+
+  @media (max-width: 767px) {
+    .hero {
+      padding-bottom: var(--sp-8);
+    }
+    /* телефон: вертикальный ролик 9:16 под текстом, по левому краю текста */
+    .hero__media {
+      width: min(100%, 340px);
+    }
+    .hero__screen {
+      aspect-ratio: 9 / 16;
+    }
+    /* нити — за роликом: вершина под рамкой у низа обложки, крылья выходят из-за рамки; текст сверху на чистом фоне */
+    .hero__strands {
+      --mark-w: 118vw;
+    }
+    .hero__wing {
+      left: calc(50% - var(--mark-w) / 2);
+      top: calc(100% - var(--mark-h) - var(--sp-3));
+    }
+    .hero__strands::after {
+      background: none;
+    }
+    .hero__title {
+      font-size: 2.75rem;
+    }
+    .hero__ctas .btn {
+      flex: 1 1 auto;
+    }
+  }
+</style>

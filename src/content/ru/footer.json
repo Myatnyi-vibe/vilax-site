@@ -1,0 +1,6 @@
+{
+  "contactsTitle": "Контакты",
+  "email": "support@vilax.ai",
+  "legal": { "entity": "", "details": "" },
+  "clientLogin": { "label": "Вход для клиентов", "href": "https://app.vilax.ai" }
+}

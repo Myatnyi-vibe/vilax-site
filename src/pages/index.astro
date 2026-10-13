@@ -1,0 +1,156 @@
+---
+// Экран выбора (x-default, noindex): только регион. Тип бизнеса задан регионом — /ru/ сеть, /en/ 1–9 заведений
+// (решение Данила 12.10.2026, coord.md 16:45), отдельного шага «тип бизнеса» нет.
+// Экран по умолчанию на русском, сверху — переключатель языка экрана (RU/EN): весь текст меняется из словаря.
+// Если регион уже выбран (vilax.version) и в адресе нет #choose — сразу переход в свою версию (до отрисовки).
+// «Сменить» ведёт на /#choose.
+import Base from '../layouts/Base.astro';
+import ChooserRegion from '../components/chooser/ChooserRegion.astro';
+import ModeBadge from '../components/site/ModeBadge.astro';
+import { ui } from '../i18n';
+import { VERSION_KEY, homePath, url } from '../lib/site';
+import { organizationLd } from '../lib/seo';
+import { typo } from '../lib/typo';
+
+const en = ui('en');
+const ru = ui('ru');
+
+// Словарь экрана для обоих языков (с типографикой) — переключатель языка переставляет текст на клиенте.
+const PATHS = [
+  'region.title', 'region.open',
+  'region.ru.segment', 'region.ru.card', 'region.ru.sub', 'region.ru.note',
+  'region.en.segment', 'region.en.card', 'region.en.sub', 'region.en.note',
+];
+const get = (o: unknown, p: string): string => p.split('.').reduce<any>((a, k) => (a == null ? a : a[k]), o) ?? '';
+const copy: Record<'ru' | 'en', Record<string, string>> = { ru: {}, en: {} };
+for (const p of PATHS) {
+  copy.ru[p] = typo('ru', get(ru.chooser, p));
+  copy.en[p] = typo('en', get(en.chooser, p));
+}
+---
+
+<Base
+  lang="x"
+  title={`VILAX: ${ru.chooser.title} / ${en.chooser.title}`}
+  description={en.meta.description}
+  path={url('/')}
+  alternates={{ ru: homePath('ru'), en: homePath('en') }}
+  jsonLd={[organizationLd()]}
+  noindex
+>
+  <script is:inline slot="head" define:vars={{ key: VERSION_KEY, home: { ru: homePath('ru'), en: homePath('en') } }}>
+    try {
+      // запомненная версия → сразу в неё (кроме «Сменить» = #choose)
+      var saved = localStorage.getItem(key);
+      if (location.hash !== '#choose' && (saved === 'ru' || saved === 'en')) {
+        location.replace(home[saved] + location.search);
+      }
+      // язык экрана (по умолчанию русский) — до отрисовки, чтобы у <html> был верный lang
+      var cl = sessionStorage.getItem('vilax.chooserLang');
+      document.documentElement.lang = cl === 'en' ? 'en' : 'ru';
+    } catch (e) {}
+  </script>
+
+  <div class="clang" role="group" aria-label={ru.chooser.langLabel}>
+    <button type="button" class="clang__opt" data-chooser-lang-set="ru" aria-pressed="true">RU</button>
+    <button type="button" class="clang__opt" data-chooser-lang-set="en" aria-pressed="false">EN</button>
+  </div>
+
+  <main id="main">
+    <ChooserRegion />
+  </main>
+
+  <script type="application/json" id="chooser-copy" set:html={JSON.stringify(copy)} is:inline />
+  <ModeBadge lang="ru" />
+</Base>
+
+<style>
+  /* Переключатель языка экрана — сверху справа */
+  .clang {
+    position: fixed;
+    z-index: 30;
+    top: 16px;
+    right: var(--gutter);
+    display: inline-flex;
+    padding: 3px;
+    border-radius: var(--r-pill);
+    border: 1px solid rgb(145 160 183 / 0.3);
+    background: rgb(2 8 23 / 0.55);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+  .clang__opt {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: var(--r-pill);
+    color: #91a0b7;
+    font: inherit;
+    font-size: var(--fs-caption);
+    font-weight: 560;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition:
+      color 0.2s var(--ease-ui),
+      background-color 0.2s var(--ease-ui);
+  }
+  .clang__opt:hover {
+    color: #f5f7fa;
+  }
+  .clang__opt[aria-pressed='true'] {
+    background: #18f2df;
+    color: #020817;
+  }
+  .clang__opt:focus-visible {
+    outline: 2px solid #18f2df;
+    outline-offset: 2px;
+  }
+</style>
+
+<script>
+  import { VERSION_KEY } from '../lib/site';
+
+  // ——— язык экрана ———
+  type Copy = Record<'ru' | 'en', Record<string, string>>;
+  let copy: Copy = { ru: {}, en: {} };
+  try {
+    copy = JSON.parse(document.getElementById('chooser-copy')?.textContent || '{}');
+  } catch {}
+  const langBtns = document.querySelectorAll<HTMLButtonElement>('[data-chooser-lang-set]');
+  function applyLang(lang: 'ru' | 'en') {
+    const dict = copy[lang] || {};
+    document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
+      const v = dict[el.dataset.i18n || ''];
+      if (v) el.textContent = v;
+    });
+    document.documentElement.lang = lang;
+    langBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.chooserLangSet === lang)));
+    try {
+      sessionStorage.setItem('vilax.chooserLang', lang);
+    } catch {}
+  }
+  let startLang: 'ru' | 'en' = 'ru';
+  try {
+    if (sessionStorage.getItem('vilax.chooserLang') === 'en') startLang = 'en';
+  } catch {}
+  applyLang(startLang);
+  langBtns.forEach((b) =>
+    b.addEventListener('click', () => applyLang(b.dataset.chooserLangSet === 'en' ? 'en' : 'ru')),
+  );
+
+  // ——— регион ———
+  // ссылки несут utm дальше в версию (их читают форма заявки и счётчик); ?segment больше не нужен — тип задан регионом
+  document.querySelectorAll<HTMLAnchorElement>('[data-version]').forEach((a) => {
+    const params = new URLSearchParams(location.search);
+    params.delete('segment');
+    a.search = params.toString();
+    a.addEventListener('click', () => {
+      try {
+        localStorage.setItem(VERSION_KEY, a.dataset.version!);
+        sessionStorage.setItem('vilax.goal.version', a.dataset.version!);
+      } catch {}
+    });
+  });
+</script>

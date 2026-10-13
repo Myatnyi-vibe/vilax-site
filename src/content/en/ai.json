@@ -1,0 +1,44 @@
+{
+  "title": "AI inside",
+  "lead": "Ask the Coordinator about your venues' numbers in plain words.",
+  "items": [
+    {
+      "screen": "t104",
+      "verified": "2026-10-10",
+      "title": "Ask the Coordinator",
+      "text": "Revenue, guests, spend per guest: the Coordinator works out the answer from your venues' data."
+    }
+  ],
+  "pending": [
+    {
+      "screen": "t111",
+      "title": "Morning briefing in Telegram",
+      "text": "Every morning: what happened yesterday and what to watch today.",
+      "reason": "Delivered in Telegram, no web screen; needs confirmation in Telegram"
+    },
+    {
+      "screen": "t001",
+      "title": "AI summary of the day",
+      "text": "A short read-out for the business and each venue: what grew, what dropped and why.",
+      "reason": "Generated in the demo group, but AED revenue is labelled in roubles; product bug, not shown until fixed"
+    }
+  ],
+  "chat": {
+    "label": "Example question",
+    "messages": [
+      {
+        "from": "user",
+        "text": "Why were sales down at our second location yesterday?"
+      },
+      {
+        "from": "bot",
+        "text": "Guest count was in line with a typical Friday, but spend per guest was lower, so revenue came in below normal."
+      }
+    ]
+  },
+  "aura": {
+    "enabled": false,
+    "title": "Aura guest replies",
+    "label": "Coming soon"
+  }
+}

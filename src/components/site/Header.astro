@@ -1,0 +1,267 @@
+---
+// Шапка версии: логотип, меню «Платформа · Цены · Подключение · Вопросы», «Сменить регион», «Запросить демо».
+// Над обложкой прозрачная, дальше — с фоном (IntersectionObserver на [data-hero], без слушателя scroll).
+// На телефоне меню в выезжающей панели (<dialog>), кнопка демо видна всегда.
+import Logo from '../brand/Logo.astro';
+import { ui, type Lang } from '../../i18n';
+import { NAV_SECTIONS, CHOOSE_HREF, homePath } from '../../lib/site';
+
+interface Props {
+  lang: Lang;
+  /** Шапка лежит поверх обложки и прозрачна, пока обложка на экране. */
+  overHero?: boolean;
+}
+
+const { lang, overHero = false } = Astro.props;
+const t = ui(lang);
+const home = homePath(lang);
+---
+
+<header class="hdr" data-over={overHero ? 'true' : 'false'} data-solid={overHero ? 'false' : 'true'}>
+  <div class="hdr__inner container">
+    <a class="hdr__logo" href={home} aria-label={t.a11y.home}><Logo id="hdr" /></a>
+    <nav class="hdr__nav" aria-label={t.a11y.nav}>
+      {NAV_SECTIONS.map((s) => <a href={`${home}#${s}`}>{t.nav[s]}</a>)}
+    </nav>
+    <div class="hdr__end">
+      <a class="hdr__switch" href={CHOOSE_HREF}>{t.chrome.switchVersion}</a>
+      <a class="btn btn--primary btn--sm" href="#demo" data-demo="header">{t.chrome.demo}</a>
+      <button class="hdr__burger" type="button" aria-label={t.a11y.menuOpen} aria-controls="site-menu" aria-expanded="false" data-menu-open>
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<dialog id="site-menu" class="menu" aria-label={t.a11y.nav}>
+  <div class="menu__top">
+    <a class="hdr__logo" href={home} aria-label={t.a11y.home} data-menu-close><Logo id="menu" /></a>
+    <button class="menu__close" type="button" aria-label={t.a11y.menuClose} data-menu-close><span aria-hidden="true"></span></button>
+  </div>
+  <nav class="menu__nav" aria-label={t.a11y.nav}>
+    {NAV_SECTIONS.map((s) => <a href={`${home}#${s}`} data-menu-close>{t.nav[s]}</a>)}
+  </nav>
+  <div class="menu__end">
+    <a class="btn btn--primary" href="#demo" data-demo="menu" data-menu-close>{t.chrome.demo}</a>
+    <a class="menu__switch" href={CHOOSE_HREF}>{t.chrome.switchVersion}</a>
+  </div>
+</dialog>
+
+<script>
+  const header = document.querySelector<HTMLElement>('.hdr');
+  const hero = document.querySelector<HTMLElement>('[data-hero]');
+  if (header && hero && header.dataset.over === 'true') {
+    const h = header.offsetHeight;
+    new IntersectionObserver(
+      ([entry]) => {
+        header.dataset.solid = entry.isIntersecting ? 'false' : 'true';
+      },
+      { rootMargin: `-${h}px 0px 0px 0px`, threshold: 0 },
+    ).observe(hero);
+  }
+
+  const menu = document.getElementById('site-menu') as HTMLDialogElement | null;
+  const opener = document.querySelector<HTMLButtonElement>('[data-menu-open]');
+  if (menu && opener) {
+    opener.addEventListener('click', () => {
+      menu.showModal();
+      opener.setAttribute('aria-expanded', 'true');
+    });
+    menu.addEventListener('close', () => opener.setAttribute('aria-expanded', 'false'));
+    menu.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target === menu || target.closest('[data-menu-close]')) menu.close();
+    });
+  }
+</script>
+
+<style>
+  .hdr {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: var(--z-header);
+    height: var(--header-h);
+    transition:
+      background-color 0.3s var(--ease-ui),
+      border-color 0.3s var(--ease-ui);
+    border-bottom: 1px solid transparent;
+  }
+  .hdr[data-solid='true'] {
+    background: rgb(var(--canvas-rgb) / 0.88);
+    border-bottom-color: var(--hairline);
+    -webkit-backdrop-filter: blur(12px) saturate(1.3);
+    backdrop-filter: blur(12px) saturate(1.3);
+  }
+  .hdr__inner {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
+  .hdr__logo {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    text-decoration: none;
+    color: var(--ink);
+    border-radius: var(--r-xs);
+  }
+  .hdr__nav {
+    display: flex;
+    gap: 28px;
+    font-size: var(--fs-small);
+  }
+  .hdr__nav a,
+  .hdr__switch {
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color 0.2s var(--ease-ui);
+  }
+  .hdr__nav a:hover,
+  .hdr__switch:hover {
+    color: var(--ink);
+  }
+  .hdr__end {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: var(--fs-small);
+  }
+  .hdr__switch {
+    color: var(--ink-subtle);
+  }
+  .hdr__burger,
+  .menu__close {
+    display: none;
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--hairline-strong);
+    background: transparent;
+    cursor: pointer;
+  }
+  @media (hover: hover) {
+    .hdr__burger:hover,
+    .menu__close:hover {
+      border-color: var(--ink-subtle);
+      background: var(--surface-1);
+    }
+  }
+  .hdr__burger span,
+  .hdr__burger span::before,
+  .menu__close span,
+  .menu__close span::before {
+    position: absolute;
+    left: 13px;
+    right: 13px;
+    height: 1.5px;
+    background: var(--ink);
+  }
+  .hdr__burger span {
+    top: 17px;
+  }
+  .hdr__burger span::before {
+    content: '';
+    left: 0;
+    right: 0;
+    top: 8px;
+  }
+  .menu__close {
+    display: block;
+  }
+  .menu__close span {
+    top: 21px;
+    transform: rotate(45deg);
+  }
+  .menu__close span::before {
+    content: '';
+    left: 0;
+    right: 0;
+    top: 0;
+    transform: rotate(-90deg);
+  }
+
+  .menu {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0 var(--gutter) 32px;
+    border: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    display: none;
+    flex-direction: column;
+  }
+  .menu[open] {
+    display: flex;
+  }
+  .menu::backdrop {
+    background: rgb(var(--canvas-rgb) / 0.6);
+  }
+  .menu__top {
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .menu__nav {
+    display: flex;
+    flex-direction: column;
+    margin-top: 24px;
+  }
+  .menu__nav a {
+    padding: 14px 0;
+    font-size: 1.75rem;
+    font-weight: 560;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .menu__end {
+    margin-top: auto;
+    display: grid;
+    gap: 16px;
+  }
+  .menu__switch {
+    justify-self: center;
+    padding: 10px;
+    color: var(--ink-subtle);
+    text-decoration: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .menu[open] {
+      animation: menu-in 0.32s var(--ease-out);
+    }
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .hdr__nav {
+      gap: 20px;
+    }
+    .hdr__inner {
+      gap: 24px;
+    }
+  }
+  @media (max-width: 899px) {
+    .hdr__nav,
+    .hdr__switch {
+      display: none;
+    }
+    .hdr__burger {
+      display: block;
+    }
+    .hdr__end {
+      gap: 10px;
+    }
+  }
+</style>

@@ -1,0 +1,14 @@
+{
+  "title": "Getting started",
+  "steps": [
+    { "title": "Request", "text": "Leave your phone number, name, city and venue name. A manager will get in touch." },
+    { "title": "Demo", "text": "We show you the platform on a demo venue and go through what you need: reports, POS and the tools to connect." },
+    { "title": "POS connection", "text": "We connect your POS and the other data sources your venues already use." },
+    { "title": "Team kick-off", "text": "A kick-off session for your team: roles and access, reports and Telegram summaries." },
+    { "title": "Live", "text": "Your venues run on VILAX every day, with summaries delivered to Telegram." }
+  ],
+  "included": {
+    "title": "What standard onboarding includes",
+    "text": "With annual billing: one supported connection, user access set-up and a kick-off session for your team. Anything else is quoted separately."
+  }
+}

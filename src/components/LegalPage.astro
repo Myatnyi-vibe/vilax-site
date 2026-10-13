@@ -1,0 +1,66 @@
+---
+// Правовая страница версии по прежнему адресу: /privacy, /terms, /support и /ru/-версии.
+// alias — синоним /en/<doc> для английской версии, canonical у него — прежний адрес.
+import Version from '../layouts/Version.astro';
+import { ui, type Lang } from '../i18n';
+import { legalHtml, type LegalDoc } from '../lib/legal';
+import { legalPath, url } from '../lib/site';
+
+interface Props {
+  lang: Lang;
+  doc: LegalDoc;
+  alias?: boolean;
+}
+
+const { lang, doc, alias = false } = Astro.props;
+const t = ui(lang);
+const canonicalPath = legalPath(lang, doc);
+const html = legalHtml(lang, doc);
+---
+
+<Version
+  lang={lang}
+  title={`${t.legal[doc]} · VILAX`}
+  description={t.meta.description}
+  path={alias ? url(`/en/${doc}`) : canonicalPath}
+  canonicalPath={canonicalPath}
+  alternates={{ ru: legalPath('ru', doc), en: legalPath('en', doc) }}
+  noindex={alias}
+>
+  <article class="legal container" set:html={html} />
+</Version>
+
+<style>
+  .legal {
+    max-width: calc(46rem + 2 * var(--gutter));
+    padding-block: var(--sp-8) var(--sp-9);
+  }
+  .legal :global(h1) {
+    font-size: var(--fs-display-md);
+    line-height: 1.1;
+    font-weight: var(--display-weight);
+    letter-spacing: -0.025em;
+    margin-bottom: var(--sp-3);
+  }
+  .legal :global(h2) {
+    margin-top: var(--sp-7);
+    margin-bottom: var(--sp-3);
+    font-size: var(--fs-title);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .legal :global(p),
+  .legal :global(li) {
+    color: var(--ink-muted);
+    max-width: 68ch;
+  }
+  .legal :global(p + p) {
+    margin-top: var(--sp-3);
+  }
+  .legal :global(a) {
+    color: var(--link);
+  }
+  .legal :global(.muted) {
+    color: var(--ink-subtle);
+  }
+</style>

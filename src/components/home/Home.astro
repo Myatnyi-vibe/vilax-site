@@ -1,0 +1,78 @@
+---
+// Главная версии: секции 1–12 по порядку из sections.json (словарь B), выключенные секции пропускаются.
+// 1 обложка и 2 сцена — A; 8 цены — компонент B; форма заявки — C (в Version.astro). Подвал — Footer.astro.
+import ruSections from '../../content/ru/sections.json';
+import enSections from '../../content/en/sections.json';
+import ruPricing from '../../content/ru/pricing.json';
+import enPricing from '../../content/en/pricing.json';
+import type { Lang } from '../../i18n';
+import FusionScene from '../../scenes/fusion/FusionScene.astro';
+import Pricing from '../calculator/Pricing.astro';
+import Hero from './Hero.astro';
+import Platform from './Platform.astro';
+import Blocks from './Blocks.astro';
+import Ai from './Ai.astro';
+import Integrations from './Integrations.astro';
+import Onboarding from './Onboarding.astro';
+import Faq from './Faq.astro';
+import Cta from './Cta.astro';
+import SectionHead from './SectionHead.astro';
+import Reveal from './Reveal.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const sections = lang === 'ru' ? ruSections : enSections;
+const pricing = lang === 'ru' ? ruPricing : enPricing;
+const enabled = sections.enabled as Record<string, boolean | undefined>;
+// секция без выключателя включена всегда; кейсы (9) выключены до согласия клиента (Р-14)
+const on = (key: string) => enabled[key] !== false;
+const order = sections.order.filter(on);
+---
+
+{
+  order.map((key) => {
+    switch (key) {
+      case 'hero':
+        return <Hero lang={lang} />;
+      case 'fusion':
+        return <FusionScene lang={lang} />;
+      case 'platform':
+        return <Platform lang={lang} />;
+      case 'blocks':
+        return <Blocks lang={lang} />;
+      case 'ai':
+        return <Ai lang={lang} />;
+      case 'integrations':
+        return <Integrations lang={lang} />;
+      case 'onboarding':
+        return <Onboarding lang={lang} />;
+      case 'pricing':
+        return (
+          <section class="sec pricing-sec" id="pricing" aria-labelledby="pricing-title">
+            <div class="container">
+              <SectionHead lang={lang} id="pricing-title" title={pricing.title} lead={pricing.lead} />
+              <div class="pricing-sec__body">
+                <Pricing lang={lang} />
+              </div>
+            </div>
+          </section>
+        );
+      case 'faq':
+        return <Faq lang={lang} />;
+      case 'cta':
+        return <Cta lang={lang} />;
+      default:
+        return null;
+    }
+  })
+}
+<Reveal />
+
+<style>
+  .pricing-sec__body {
+    margin-top: var(--sp-5);
+  }
+</style>

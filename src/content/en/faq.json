@@ -1,0 +1,14 @@
+{
+  "title": "FAQ",
+  "items": [
+    { "q": "Which POS systems do you support?", "a": "Syrve today, with Foodics on the roadmap. Reservations come in from SevenRooms, and targets and reference data from Google Sheets." },
+    { "q": "How long does set-up take?", "a": "It depends on your POS and the number of locations. Your manager will give you a timeline after the demo. Standard onboarding is included with annual billing: one supported connection, user access set-up and a kick-off session." },
+    { "q": "Who can see our data?", "a": "Only the people you give access to. Access is set by role and location: a venue manager sees their venue, the owner sees every venue." },
+    { "q": "Can we start with some locations or some blocks?", "a": "Yes. Core is required for each location on VILAX; blocks are added only where you need them." },
+    { "q": "Does VILAX work for a single venue?", "a": "Yes. Pricing is per location, starting from one." },
+    { "q": "How does billing work?", "a": "Monthly, or annually in advance with {annualDiscount} off the subscription and standard onboarding included. Prices exclude VAT; VAT at {taxRate} is added on top." },
+    { "q": "What does AI cost?", "a": "AI usage is included in the subscription: the Coordinator handles {coordinatorIncluded} requests per location per month. If you need more, add a pack for the rest of the month, with no automatic charges." },
+    { "q": "Is there an app?", "a": "No separate app is needed: VILAX runs in the browser on desktop and mobile, and daily summaries arrive in Telegram." },
+    { "q": "Do you support franchise groups?", "a": "Yes, with the Franchise block: partner contracts, invoices, receivables by age and incoming payments. Priced on request." }
+  ]
+}

@@ -1,0 +1,295 @@
+/* Общие токены, шрифты и базовые элементы. Цвета задают только темы (ru.css, en.css) — компоненты берут переменные.
+   Шкалы — из DESIGN.md. */
+
+/* Inter: латиница грузится везде, кириллица — только где есть русский текст (unicode-range).
+   Диапазоны совпадают с scripts/fonts-subset.py. */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-200B, U+2010-2027,
+    U+202F, U+2030, U+2032-2033, U+2039-203A, U+2044, U+20AC, U+2122, U+2190-2193, U+2212, U+2215, U+2713;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-cyrillic.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0400-045F, U+0490-0491, U+04D8-04D9, U+20BD, U+2116;
+}
+/* JetBrains Mono — только числа (цены, суммы, показатели). */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jbmono-num.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Бренд-гайд VILAX v1.0 без фиолетового (решение владельца 29.09.2026) */
+  --brand-deep-navy: #020817;
+  --brand-panel-navy: #0b1528;
+  --brand-data-cyan: #18f2df;
+  --brand-signal-blue: #2297ff;
+  --brand-pure-white: #f5f7fa;
+  --brand-slate: #91a0b7;
+
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  /* Типографика (DESIGN.md → typography.scale) */
+  --fs-display-xl: clamp(2.75rem, 6vw, 5.5rem);
+  --fs-display-lg: clamp(2.25rem, 4.4vw, 4rem);
+  --fs-display-md: clamp(1.875rem, 3.2vw, 2.75rem);
+  --fs-headline: clamp(1.5rem, 2.2vw, 1.875rem);
+  --fs-title: 1.25rem;
+  --fs-body-lg: clamp(1.0625rem, 1.3vw, 1.1875rem);
+  --fs-body: 1rem;
+  --fs-small: 0.875rem;
+  --fs-caption: 0.8125rem;
+  --display-weight: 620;
+
+  /* Отступы, радиусы, сетка */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+  --sp-10: 128px;
+  --r-xs: 4px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 9999px;
+  --btn-r: var(--r-sm);
+  --container: 1280px;
+  --gutter: 40px;
+  --header-h: 64px;
+
+  /* Движение */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-ui: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Слои */
+  --z-header: 40;
+  --z-sheet: 60;
+  --z-toast: 70;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+    --header-h: 56px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 16px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+/* вычитка 11.10: заголовки без одинокого слова в последней строке, абзацы без висячей строки из одного слова */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+a {
+  color: inherit;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+a,
+button,
+summary,
+label,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgb(var(--canvas-rgb) / 0);
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.container {
+  width: 100%;
+  max-width: calc(var(--container) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.skip-link {
+  position: fixed;
+  left: 16px;
+  top: -64px;
+  z-index: calc(var(--z-header) + 1);
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--canvas);
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: 12px;
+}
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Секция главной: вертикальные отступы по DESIGN.md (layout.section) и тонкая граница сверху. */
+.sec {
+  padding-block: var(--sec-pad, 128px);
+  border-top: 1px solid var(--hairline);
+}
+/* секции ниже первого экрана не раскладываются, пока до них не долистали: меньше работы стиля и вёрстки
+   при загрузке и при подмене шрифта (Lighthouse /ru/ 11.10: Style & Layout ~2 с на телефоне).
+   Переход по якорю (#pricing и др.) или адрес с # снимают это (класс cv-off, Version.astro) — иначе прыжок
+   считался бы по примерным высотам секций и промахивался. */
+html:not(.cv-off) .sec:not([data-fusion]) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+@media (max-width: 1023px) {
+  .sec {
+    --sec-pad: 96px;
+  }
+}
+@media (max-width: 767px) {
+  .sec {
+    --sec-pad: 72px;
+  }
+}
+
+/* Появление при прокрутке (src/components/home/Reveal.astro): сдвиг 16 px + прозрачность, один раз.
+   Без скриптов и при «меньше движения» всё видно сразу — правило действует только под html.reveal-on. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-on [data-reveal]:not(.is-in) {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  .reveal-on [data-reveal] {
+    transition:
+      opacity 0.7s var(--ease-out),
+      transform 0.7s var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+}
+
+/* Кнопки: основная (акцент), вторичная (поверхность + граница), текстовая. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: var(--btn-r);
+  font: 550 0.9375rem/1 var(--font-sans);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.16s var(--ease-ui),
+    background-color 0.2s var(--ease-ui),
+    border-color 0.2s var(--ease-ui),
+    color 0.2s var(--ease-ui);
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn--primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.btn--primary:hover {
+  background: var(--accent-hover);
+}
+.btn--secondary {
+  background: var(--surface-1);
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+}
+.btn--secondary:hover {
+  border-color: var(--ink-subtle);
+}
+.btn--sm {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 0.875rem;
+}
+@media (max-width: 767px) {
+  /* на телефоне цель нажатия не меньше 44 px (ТЗ «Телефон») */
+  .btn--sm {
+    height: 44px;
+  }
+}

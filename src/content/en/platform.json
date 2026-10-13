@@ -1,0 +1,17 @@
+{
+  "title": "Core plus four blocks",
+  "lead": "Every venue runs on Core. Add a block when you need it: guests, money, team, loyalty.",
+  "earlyAccess": "Early access",
+  "required": "Required",
+  "blocks": [
+    { "key": "base", "name": "Core", "task": "See your business and every venue, every day" },
+    { "key": "guests", "name": "Guests 360", "task": "Run the guest journey from first inquiry to the next visit", "earlyAccess": true },
+    { "key": "finance", "name": "Finance & Control", "task": "See where each restaurant makes money and where it leaks" },
+    { "key": "people", "name": "People & Academy", "task": "Train your team and track how it performs", "earlyAccess": true },
+    { "key": "loyalty", "name": "Loyalty", "task": "Launch your own program and grow repeat visits" }
+  ],
+  "franchise": {
+    "name": "Franchise",
+    "text": "For franchisors and management companies: partner contracts, invoices, receivables by age and incoming payments. Priced on request."
+  }
+}

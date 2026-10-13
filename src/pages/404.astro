@@ -1,0 +1,83 @@
+---
+// Настоящая 404: отдаётся на любой несуществующий адрес (nginx error_page 404 /404.html).
+import Base from '../layouts/Base.astro';
+import Logo from '../components/brand/Logo.astro';
+import ModeBadge from '../components/site/ModeBadge.astro';
+import { ui } from '../i18n';
+import { CHOOSE_HREF, homePath, url } from '../lib/site';
+import { typo } from '../lib/typo';
+
+const ru = ui('ru');
+const en = ui('en');
+---
+
+<Base lang="x" title="404 · VILAX" description={en.notFound.text} path={url('/404')} noindex>
+  <main id="main" class="nf">
+    <a class="nf__logo" href={CHOOSE_HREF} aria-label={`VILAX: ${en.chooser.title}`}><Logo id="nf" /></a>
+    <div class="nf__body">
+      <p class="nf__code num" aria-hidden="true">404</p>
+      <div class="nf__cols">
+        <div lang="ru">
+          <h1>{typo('ru', ru.notFound.title)}</h1>
+          <p>{typo('ru', ru.notFound.text)}</p>
+          <a class="btn btn--primary" href={homePath('ru')}>{ru.notFound.back}</a>
+        </div>
+        <div lang="en">
+          <h2>{en.notFound.title}</h2>
+          <p>{en.notFound.text}</p>
+          <a class="btn btn--secondary" href={homePath('en')}>{en.notFound.back}</a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <ModeBadge lang="ru" />
+</Base>
+
+<style>
+  .nf {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    padding: 28px var(--gutter) var(--sp-8);
+  }
+  .nf__logo {
+    justify-self: start;
+    display: inline-flex;
+    color: var(--ink);
+    border-radius: var(--r-xs);
+  }
+  .nf__body {
+    align-self: center;
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+  }
+  .nf__code {
+    font-size: clamp(6rem, 22vw, 16rem);
+    line-height: 0.9;
+    font-weight: 200;
+    letter-spacing: -0.06em;
+    color: var(--accent);
+  }
+  .nf__cols {
+    margin-top: var(--sp-7);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-7);
+  }
+  .nf h1,
+  .nf h2 {
+    font-size: var(--fs-headline);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .nf__cols p {
+    margin-block: var(--sp-3) var(--sp-5);
+    color: var(--ink-muted);
+  }
+  @media (max-width: 767px) {
+    .nf__cols {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

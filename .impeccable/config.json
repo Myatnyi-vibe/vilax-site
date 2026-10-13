@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-10-10T14:35:58.648Z",
+        "reason": "Бренд-гайд VILAX v1.0 и ТЗ сайта vilax.ai (раздел «Бренд»): Inter для текста, JetBrains Mono для цифр — шрифт задан брендом"
+      }
+    ]
+  }
+}

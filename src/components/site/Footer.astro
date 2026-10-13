@@ -1,0 +1,160 @@
+---
+// Секция 12 «Подвал»: логотип, разделы, документы, контакты, вход для клиентов, «Сменить регион».
+// Контакты, юрблок и вход — словарь B (footer.json); юрлицо и реквизиты по Р-12 пока пустые — тогда строки нет.
+import Logo from '../brand/Logo.astro';
+import ruFooter from '../../content/ru/footer.json';
+import enFooter from '../../content/en/footer.json';
+import { ui, type Lang } from '../../i18n';
+import { NAV_SECTIONS, LEGAL_DOCS, CHOOSE_HREF, homePath, legalPath } from '../../lib/site';
+import { typo } from '../../lib/typo';
+import { ANALYTICS_ON } from '../../lib/analytics';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = ui(lang);
+const f = lang === 'ru' ? ruFooter : enFooter;
+const home = homePath(lang);
+const legal = [f.legal.entity, f.legal.details].filter(Boolean);
+---
+
+<footer class="ftr">
+  <div class="container ftr__grid">
+    <div class="ftr__brand">
+      <a class="ftr__logo" href={home} aria-label={t.a11y.home}><Logo id="ftr" /></a>
+      <p>{t.footer.tagline}</p>
+    </div>
+    <nav class="ftr__cols" aria-label={t.a11y.footerNav}>
+      <ul>
+        {NAV_SECTIONS.map((s) => <li><a href={`${home}#${s}`}>{t.nav[s]}</a></li>)}
+      </ul>
+      <div>
+        <h2>{t.footer.documents}</h2>
+        <ul>
+          {LEGAL_DOCS.map((d) => <li><a href={legalPath(lang, d)}>{typo(lang, t.legal[d])}</a></li>)}
+        </ul>
+      </div>
+      <div>
+        <h2>{f.contactsTitle}</h2>
+        <ul>
+          <li><a href={`mailto:${f.email}`}>{f.email}</a></li>
+          <li><a href={f.clientLogin.href} rel="noopener">{f.clientLogin.label}</a></li>
+          <li><a href={CHOOSE_HREF}>{t.chrome.switchVersion}</a></li>
+          {ANALYTICS_ON && (
+            <li>
+              <button class="ftr__btn" type="button" data-consent-open>
+                {t.consent.settings}
+              </button>
+            </li>
+          )}
+        </ul>
+      </div>
+    </nav>
+  </div>
+  <div class="container ftr__bottom">
+    <p>{t.footer.rights}</p>
+    {legal.length > 0 && <p class="ftr__legal">{legal.join(' · ')}</p>}
+  </div>
+</footer>
+
+<style>
+  .ftr {
+    border-top: 1px solid var(--hairline);
+    padding-block: var(--sp-8) var(--sp-6);
+    color: var(--ink-subtle);
+    font-size: var(--fs-small);
+  }
+  .ftr__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: var(--sp-7);
+  }
+  .ftr__logo {
+    display: inline-flex;
+    color: var(--ink);
+    border-radius: var(--r-xs);
+  }
+  .ftr__brand p {
+    margin-top: var(--sp-4);
+    max-width: 28ch;
+  }
+  .ftr__cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-6);
+    align-items: start;
+  }
+  .ftr h2 {
+    margin-bottom: var(--sp-3);
+    font-size: var(--fs-caption);
+    font-weight: 500;
+    color: var(--ink-faint);
+  }
+  .ftr ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    align-content: start;
+    gap: 2px;
+  }
+  .ftr a {
+    display: inline-block;
+    padding: 6px 0;
+    color: var(--ink-muted);
+    text-decoration: none;
+  }
+  .ftr a:hover {
+    color: var(--ink);
+  }
+  .ftr__btn {
+    padding: 6px 0;
+    border: 0;
+    background: none;
+    color: var(--ink-muted);
+    cursor: pointer;
+    text-align: left;
+  }
+  .ftr__btn:hover {
+    color: var(--ink);
+  }
+  .ftr__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--sp-2) var(--sp-5);
+    position: relative;
+    margin-top: var(--sp-8);
+    padding-top: var(--sp-5);
+    font-size: var(--fs-caption);
+  }
+  /* линия по ширине содержимого, а не по полям контейнера */
+  .ftr__bottom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: var(--gutter);
+    right: var(--gutter);
+    height: 1px;
+    background: var(--hairline);
+  }
+  @media (max-width: 767px) {
+    .ftr__grid {
+      grid-template-columns: 1fr;
+      gap: var(--sp-6);
+    }
+    .ftr__cols {
+      grid-template-columns: 1fr 1fr;
+    }
+    .ftr__cols > ul {
+      grid-column: 1 / -1;
+      grid-template-columns: 1fr 1fr;
+      column-gap: var(--sp-6);
+    }
+    .ftr a {
+      padding: 10px 0;
+    }
+  }
+</style>
