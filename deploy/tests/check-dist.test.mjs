@@ -23,10 +23,13 @@ const LEGAL_WORDS = {
 /** Поддельная сборка: все обязательные файлы, страницы с формой, CSP как у deploy/csp.mjs. */
 function fixture({ mode, base = '', site = 'https://vilax.ai', lead = '' }, patch = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'check-dist-'));
-  const robots = mode === 'prod' ? 'index, follow' : 'noindex, nofollow';
+  // Страницы, которым noindex положен и в проде (экран выбора, 404, синонимы en) — «noindex, follow» в обоих режимах
+  // (SITE-17); остальные — index в проде, noindex в превью.
+  const noindexAlways = new Set(['index.html', '404.html', 'en/privacy.html', 'en/terms.html', 'en/support.html']);
+  const robotsFor = (path) => noindexAlways.has(path) ? 'noindex, follow' : mode === 'prod' ? 'index, follow' : 'noindex, nofollow';
   const html = (path, body = '') =>
     withCsp(
-      `<!doctype html><html lang="ru" data-mode="${mode}"><head><meta charset="utf-8"><meta name="robots" content="${path === '404.html' || path.startsWith('en/') && !path.endsWith('index.html') && !path.endsWith('consent.html') ? 'noindex, nofollow' : robots}">` +
+      `<!doctype html><html lang="ru" data-mode="${mode}"><head><meta charset="utf-8"><meta name="robots" content="${robotsFor(path)}">` +
         `<link rel="canonical" href="${site}${base}/${path.replace(/index\.html$/, '').replace(/\.html$/, '')}">` +
         `<link rel="icon" href="${base}/favicon.svg"><script>go()</script></head><body>` +
         `<a href="${base}/ru/">ru</a><a href="${base}/privacy">p</a><img src="${base}/og/ru.png" alt="">` +

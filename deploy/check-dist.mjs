@@ -23,8 +23,9 @@ const REQUIRED = [
 ];
 // Остатки сборки, которых на сервере быть не должно (Astro кладёт их в outDir вне корня проекта).
 const FORBIDDEN = [/^content-assets\.mjs$/, /^content-modules\.mjs$/, /^data-store\.json$/, /^settings\.json$/, /\.map$/, /(^|\/)\.env/, /^\.well-known\//];
-// Прод: страницы, которым noindex положен (404 и синонимы /en/<doc> с canonical на прежний адрес).
-const PROD_NOINDEX = new Set(['404.html', 'en/privacy.html', 'en/terms.html', 'en/support.html']);
+// Прод: страницы, которым noindex положен (экран выбора «/», 404 и синонимы /en/<doc> с canonical на прежний адрес).
+// Экран выбора (index.html) в проде — noindex, follow (SITE-17): индексируются /ru/ и /en/, а не корень-развилка.
+const PROD_NOINDEX = new Set(['index.html', '404.html', 'en/privacy.html', 'en/terms.html', 'en/support.html']);
 // Служебное, чего не должно быть в публичных файлах.
 const LEAKS = [
   [/localhost|127\.0\.0\.1|\[::1\]/, 'адрес стенда (localhost)'],
@@ -106,7 +107,10 @@ export function checkDist({ dist, mode, site = 'https://vilax.ai', base = '', le
     }
 
     const robots = /<meta name="robots" content="([^"]+)"/.exec(html)?.[1] ?? '';
-    if (mode === 'preview' && robots !== 'noindex, nofollow') fail(f, `превью должно быть закрыто: robots="${robots}"`);
+    // Превью закрыто от поиска: на каждой странице нужен noindex (robots.txt и так Disallow: /). Директива follow/nofollow
+    // не влияет на индексирование — страницы, которым noindex положен и в проде (экран выбора, 404, синонимы en), держат
+    // «noindex, follow», и это тоже закрыто.
+    if (mode === 'preview' && !/\bnoindex\b/.test(robots)) fail(f, `превью должно быть закрыто: robots="${robots}"`);
     if (mode === 'prod' && !PROD_NOINDEX.has(f) && /noindex/.test(robots)) fail(f, `прод закрыт от поисковиков: robots="${robots}"`);
 
     const canonical = /<link rel="canonical" href="([^"]+)"/.exec(html)?.[1];
