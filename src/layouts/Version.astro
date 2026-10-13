@@ -1,5 +1,9 @@
 ---
 // Страница версии (РФ или English): тема, шапка, подвал, плашка режима, запоминание версии, кнопки «Запросить демо».
+// Тип бизнеса задан регионом (/ru/ — сеть, /en/ — 1–9 заведений): inline-скрипт в <head> ставит data-segment на <html>
+// и window.__vilaxSegment до отрисовки (REGION_SEGMENT[lang]); ?segment= и прежний localStorage.vilax.segment не учитываются,
+// vilax.segment перезаписывается значением региона. Комментарии держим здесь (фронтматтер не попадает в HTML):
+// в inline-скрипте их быть не должно — иначе кириллица утечёт в /en/ (строгое правило «в /en/ ни одной русской буквы»).
 import Base from './Base.astro';
 import Header from '../components/site/Header.astro';
 import Footer from '../components/site/Footer.astro';
@@ -29,9 +33,6 @@ const t = ui(lang);
 
 <Base lang={lang} {...rest}>
   <script is:inline slot="head" define:vars={{ segKey: SEGMENT_KEY, seg: REGION_SEGMENT[lang] }}>
-    // Тип бизнеса задан регионом (/ru/ — сеть, /en/ — 1–9 заведений) и ставится до отрисовки:
-    // data-segment на <html> и window.__vilaxSegment. ?segment= и прежний выбор в localStorage не учитываются;
-    // vilax.segment перезаписывается значением региона, чтобы запасные чтения не видели устаревший тип.
     document.documentElement.dataset.segment = seg;
     window.__vilaxSegment = seg;
     try {

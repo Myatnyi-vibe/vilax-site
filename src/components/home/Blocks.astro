@@ -13,6 +13,7 @@ import { ui } from '../../i18n';
 import type { Lang } from '../../i18n';
 import { typo } from '../../lib/typo';
 import { fill } from '../../lib/pricing-text';
+import { url } from '../../lib/site';
 import SectionHead from './SectionHead.astro';
 import Screen from './Screen.astro';
 
@@ -161,7 +162,7 @@ const blocks = t.items
                           class="blk__feat"
                           data-pressed={f === b.lead ? 'true' : 'false'}
                           data-controls={`blocks-${b.key}-img`}
-                          data-shot={f.shot}
+                          data-shot={url(f.shot)}
                           data-alt={f.alt}
                           data-h={shotH(f.shot)}
                           data-screen={f.screen}

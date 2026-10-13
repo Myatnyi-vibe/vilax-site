@@ -142,4 +142,8 @@ try {
 writeFileSync(join(dir, 'summary.json'), JSON.stringify({ budget: BUDGET, rows }, null, 2));
 console.table(rows);
 console.log(`Отчёты: ${dir}`);
-process.exit(failed ? 1 : 0);
+// --report-only: печатаем отчёт, но не падаем кодом 1 (для CI — общие раннеры шумят по скорости, бюджет
+// проверяет локальная приёмка SITE-7). Локально флаг не передаём — приёмка остаётся строгой.
+const reportOnly = args.includes('--report-only');
+if (failed && reportOnly) console.log('Бюджет не выполнен, но --report-only: выходим без ошибки (для сведения).');
+process.exit(failed && !reportOnly ? 1 : 0);

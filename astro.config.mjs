@@ -1,5 +1,47 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import { readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { transformSync } from 'esbuild';
+
+// Inline-скрипты (is:inline, define:vars) и HTML-комментарии Astro отдаёт в HTML дословно — с русскими комментариями.
+// Пользователю не видны, но утекают в /en/ и нарушают строгое «в /en/ ни одной русской буквы» на уровне исходника.
+// Поэтому после сборки: (1) минифицируем тело каждого inline-скрипта (esbuild срезает комментарии; внешние src,
+// JSON и JSON-LD не трогаем, не-JS тело оставляем); (2) срезаем HTML-комментарии вне script/style (в проде не нужны).
+// Централизованно для всех сессий — их файлы не трогаем.
+function stripSourceComments() {
+  return {
+    name: 'strip-source-comments',
+    hooks: {
+      'astro:build:done': ({ dir }) => {
+        const root = fileURLToPath(dir);
+        const walk = (d) => readdirSync(d).flatMap((n) => { const p = join(d, n); return statSync(p).isDirectory() ? walk(p) : [p]; });
+        for (const f of walk(root).filter((f) => f.endsWith('.html'))) {
+          const src = readFileSync(f, 'utf8');
+          // 1) минификация тел inline-скриптов
+          let html = src.replace(/<script([^>]*)>([\s\S]*?)<\/script>/g, (m, attrs, body) => {
+            if (/\bsrc=/i.test(attrs)) return m;
+            if (/type\s*=\s*["']?(application|text)\/(ld\+)?json/i.test(attrs)) return m;
+            if (!body.trim()) return m;
+            try {
+              return `<script${attrs}>${transformSync(body, { loader: 'js', minify: true, legalComments: 'none' }).code.replace(/\s+$/, '')}</script>`;
+            } catch {
+              return m;
+            }
+          });
+          // 2) срезать HTML-комментарии вне script/style (блоки временно маскируем, чтобы не задеть их содержимое)
+          const blocks = [];
+          html = html
+            .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, (m) => `\u0000${blocks.push(m) - 1}\u0000`)
+            .replace(/<!--[\s\S]*?-->/g, '')
+            .replace(/\u0000(\d+)\u0000/g, (_, i) => blocks[+i]);
+          if (html !== src) writeFileSync(f, html);
+        }
+      },
+    },
+  };
+}
 
 // Режим сборки задаёт только адрес приёмника заявок и плашку (ТЗ, «Сайт: режимы сборки»).
 // local — заявки в локальный стенд трекера; preview — форма в режиме показа, страницы закрыты от поисковиков;
@@ -25,6 +67,7 @@ export default defineConfig({
   build: { format: 'preserve', inlineStylesheets: 'auto' },
   trailingSlash: 'ignore',
   compressHTML: true,
+  integrations: [stripSourceComments()],
   devToolbar: { enabled: false },
   vite: {
     define: {

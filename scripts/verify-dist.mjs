@@ -78,11 +78,12 @@ for (const f of files.filter((f) => f.endsWith('.html') && f !== 'google1e0ecdaf
   const html = readFileSync(join(DIST, f), 'utf8');
 
   if (EN_PAGES(f)) {
-    const text = visibleText(html);
-    const m = text.match(CYR);
+    // Строгое правило: в /en/ ни одной русской буквы — во всём исходнике, не только в видимом тексте
+    // (комментарии в inline-скриптах и HTML-комментарии срезает интеграция strip-source-comments в astro.config).
+    const m = html.match(CYR);
     if (m) {
-      const i = text.indexOf(m[0]);
-      fail(`кириллица в английской странице ${f}: «${text.slice(Math.max(0, i - 40), i + 40)}»`);
+      const i = html.indexOf(m[0]);
+      fail(`кириллица в английской странице ${f}: «${html.slice(Math.max(0, i - 40), i + 40).replace(/\s+/g, ' ')}»`);
     }
   }
 
