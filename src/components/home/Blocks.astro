@@ -36,7 +36,7 @@ const block = (s: ReturnType<typeof siteOf>, k: string) => s.blocks.find((b) => 
               </p>
             </div>
             {VARIANTS.map((v) => (
-              <div class="v" data-cur={v.cur} data-lang={v.lang}>
+              <div class="v bl__vl" data-cur={v.cur} data-lang={v.lang}>
                 <ul class="bl__feats">
                   {block(siteOf(v), k).features.map((f, fi) => (
                     <li class="bl__li" data-fi={fi} data-screen={f.screen}>

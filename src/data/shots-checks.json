@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-14T18:10:49Z",
+ "generatedAt": "2026-10-14T20:22:27.863Z",
  "shots": [
   {
    "cur": "rub",
@@ -3561,6 +3561,510 @@
     "masks": true
    },
    "status": "pass"
+  },
+  {
+   "cur": "rub",
+   "lang": "ru",
+   "theme": "dark",
+   "id": "g-booking",
+   "file": "shots/rub/ru/dark/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 26470,
+   "capturedAt": "2026-10-14",
+   "luma": 0.113,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "ru",
+   "theme": "dark",
+   "id": "g-reviews",
+   "file": "shots/rub/ru/dark/g-reviews.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 56608,
+   "capturedAt": "2026-10-14",
+   "luma": 0.116,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "ru",
+   "theme": "dark",
+   "id": "g-aura",
+   "file": "shots/rub/ru/dark/g-aura.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 50734,
+   "capturedAt": "2026-10-14",
+   "luma": 0.117,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "ru",
+   "theme": "light",
+   "id": "g-booking",
+   "file": "shots/rub/ru/light/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 26262,
+   "capturedAt": "2026-10-14",
+   "luma": 0.949,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "ru",
+   "theme": "light",
+   "id": "g-reviews",
+   "file": "shots/rub/ru/light/g-reviews.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 57854,
+   "capturedAt": "2026-10-14",
+   "luma": 0.965,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "ru",
+   "theme": "light",
+   "id": "g-aura",
+   "file": "shots/rub/ru/light/g-aura.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 51980,
+   "capturedAt": "2026-10-14",
+   "luma": 0.944,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "en",
+   "theme": "dark",
+   "id": "g-booking",
+   "file": "shots/rub/en/dark/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 25122,
+   "capturedAt": "2026-10-14",
+   "luma": 0.113,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "en",
+   "theme": "dark",
+   "id": "g-reviews",
+   "file": "shots/rub/en/dark/g-reviews.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 57504,
+   "capturedAt": "2026-10-14",
+   "luma": 0.116,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "en",
+   "theme": "dark",
+   "id": "g-aura",
+   "file": "shots/rub/en/dark/g-aura.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 47916,
+   "capturedAt": "2026-10-14",
+   "luma": 0.116,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "en",
+   "theme": "light",
+   "id": "g-booking",
+   "file": "shots/rub/en/light/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 25368,
+   "capturedAt": "2026-10-14",
+   "luma": 0.949,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "en",
+   "theme": "light",
+   "id": "g-reviews",
+   "file": "shots/rub/en/light/g-reviews.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 57240,
+   "capturedAt": "2026-10-14",
+   "luma": 0.965,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "en",
+   "theme": "light",
+   "id": "g-aura",
+   "file": "shots/rub/en/light/g-aura.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 48992,
+   "capturedAt": "2026-10-14",
+   "luma": 0.946,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "ru",
+   "theme": "dark",
+   "id": "g-booking",
+   "file": "shots/aed/ru/dark/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 26400,
+   "capturedAt": "2026-10-14",
+   "luma": 0.113,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "ru",
+   "theme": "dark",
+   "id": "g-reviews",
+   "file": "shots/aed/ru/dark/g-reviews.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 56274,
+   "capturedAt": "2026-10-14",
+   "luma": 0.115,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "ru",
+   "theme": "dark",
+   "id": "g-aura",
+   "file": "shots/aed/ru/dark/g-aura.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 47838,
+   "capturedAt": "2026-10-14",
+   "luma": 0.117,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "ru",
+   "theme": "light",
+   "id": "g-booking",
+   "file": "shots/aed/ru/light/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 26598,
+   "capturedAt": "2026-10-14",
+   "luma": 0.949,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "ru",
+   "theme": "light",
+   "id": "g-reviews",
+   "file": "shots/aed/ru/light/g-reviews.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 57306,
+   "capturedAt": "2026-10-14",
+   "luma": 0.966,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "ru",
+   "theme": "light",
+   "id": "g-aura",
+   "file": "shots/aed/ru/light/g-aura.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 48908,
+   "capturedAt": "2026-10-14",
+   "luma": 0.945,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "en",
+   "theme": "dark",
+   "id": "g-booking",
+   "file": "shots/aed/en/dark/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 24524,
+   "capturedAt": "2026-10-14",
+   "luma": 0.113,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "en",
+   "theme": "dark",
+   "id": "g-reviews",
+   "file": "shots/aed/en/dark/g-reviews.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 55524,
+   "capturedAt": "2026-10-14",
+   "luma": 0.115,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "en",
+   "theme": "dark",
+   "id": "g-aura",
+   "file": "shots/aed/en/dark/g-aura.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 46736,
+   "capturedAt": "2026-10-14",
+   "luma": 0.116,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "en",
+   "theme": "light",
+   "id": "g-booking",
+   "file": "shots/aed/en/light/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 24736,
+   "capturedAt": "2026-10-14",
+   "luma": 0.949,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "en",
+   "theme": "light",
+   "id": "g-reviews",
+   "file": "shots/aed/en/light/g-reviews.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 55718,
+   "capturedAt": "2026-10-14",
+   "luma": 0.966,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "en",
+   "theme": "light",
+   "id": "g-aura",
+   "file": "shots/aed/en/light/g-aura.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 47698,
+   "capturedAt": "2026-10-14",
+   "luma": 0.946,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
   }
  ]
 }

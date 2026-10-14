@@ -157,6 +157,33 @@ try {
   });
 
   // форма заявки на «/»: в превью ничего не уходит наружу
+  // блоки платформы: в настоящем браузере наведение на каждую функцию со снимком показывает её экран своего сочетания
+  await step('снимки функций', async () => {
+    const { page, bad } = await openPage('снимки функций');
+    for (const [lang, cur, theme] of [['ru', 'rub', 'light'], ['en', 'aed', 'dark']]) {
+      await page.goto(at(`?lang=${lang}&cur=${cur}&theme=${theme}`), { waitUntil: 'networkidle0' });
+      for (const tab of await page.$$eval('[data-tab]', (b) => b.map((x) => x.dataset.tab))) {
+        await page.click(`[data-tab="${tab}"]`);
+        const r = await page.evaluate(async (cur, lang) => {
+          const panel = document.querySelector('.bl__panel:not([hidden])');
+          const lis = [...(panel.querySelector(`.bl__vl[data-cur="${cur}"][data-lang="${lang}"]`)?.querySelectorAll('.bl__li') ?? [])];
+          const out = { total: lis.length, shown: [] };
+          for (const li of lis.filter((l) => l.classList.contains('is-shot'))) {
+            li.dispatchEvent(new MouseEvent('mouseenter'));
+            await new Promise((r) => setTimeout(r, 30));
+            out.shown.push([li.dataset.screen, panel.querySelector('[data-shot-img]').getAttribute('src') ?? '']);
+            li.dispatchEvent(new MouseEvent('mouseleave'));
+          }
+          return out;
+        }, cur, lang);
+        if (!r.total) bad(`${lang}/${cur}/${tab}: в панели нет функций`);
+        if (!r.shown.length) bad(`${lang}/${cur}/${tab}: ни одной функции со снимком`);
+        for (const [id, src] of r.shown) if (!src.endsWith(`/shots/${cur}/${lang}/${theme}/${id}.webp`)) bad(`${lang}/${cur}/${tab}: функция ${id} показала ${src}`);
+      }
+    }
+    await page.close();
+  });
+
   await step('форма', async () => {
     const { page, bad, outside } = await openPage('форма');
     await page.goto(at('?lang=ru&cur=rub'), { waitUntil: 'networkidle0' });
@@ -181,4 +208,4 @@ if (errors.length) {
   for (const e of [...new Set(errors)].slice(0, 50)) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log(`smoke (${MODE}${BASE ? `, ${BASE}` : ''}): чисто — 11 страниц, переключатели и старые адреса, форма`);
+console.log(`smoke (${MODE}${BASE ? `, ${BASE}` : ''}): чисто — 11 страниц, переключатели и старые адреса, снимки функций, форма`);

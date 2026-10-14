@@ -12,8 +12,11 @@ export function initBlocks(D: PageData) {
   let feat = -1;
   let featHover: number | null = null;
 
-  /** Список функций активного сочетания в панели (обёртка .v своего валюта × язык). */
-  const featList = (panel: HTMLElement, a: Axes) => panel.querySelector<HTMLElement>(`.v[data-cur="${a.cur}"][data-lang="${a.lang}"]`);
+  /**
+   * Список функций активного сочетания в панели — именно обёртка списка .bl__vl: у заголовка и задачи блока
+   * тоже есть span.v с теми же data-cur/data-lang, и первый .v в панели — это они (ошибка до 15.10.2026).
+   */
+  const featList = (panel: HTMLElement, a: Axes) => panel.querySelector<HTMLElement>(`.bl__vl[data-cur="${a.cur}"][data-lang="${a.lang}"]`);
   const items = (panel: HTMLElement, a: Axes) => Array.from(featList(panel, a)?.querySelectorAll<HTMLElement>('.bl__li') ?? []);
   const has = (a: Axes, id: string | undefined) => !!id && shotCode(D, a, id) !== '0';
 

@@ -98,12 +98,27 @@
       "key": "guests",
       "name": "Guests 360",
       "task": "Run the guest journey from first inquiry to the next visit",
-      "shot": "",
+      "shot": "g-booking",
       "features": [
         {
           "screen": "t094",
           "title": "Tables and orders",
           "text": "The server’s screen: floor tables, open orders and what is on them."
+        },
+        {
+          "screen": "g-booking",
+          "title": "Reservations",
+          "text": "Bookings for the whole floor in one screen: statuses, seating, who is expected."
+        },
+        {
+          "screen": "g-reviews",
+          "title": "Reviews and auto-replies",
+          "text": "Google Maps reviews in one feed, answered automatically."
+        },
+        {
+          "screen": "g-aura",
+          "title": "Aura answers guests",
+          "text": "AI answers your guests on WhatsApp and Instagram."
         }
       ]
     },

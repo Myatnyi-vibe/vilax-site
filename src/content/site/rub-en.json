@@ -109,6 +109,21 @@
           "screen": "y026",
           "title": "Floor overview",
           "text": "Who is on shift and how the floor is doing in every venue."
+        },
+        {
+          "screen": "g-booking",
+          "title": "Reservations",
+          "text": "Bookings for the whole floor in one screen: statuses, seating, who is expected."
+        },
+        {
+          "screen": "g-reviews",
+          "title": "Reviews and auto-replies",
+          "text": "Yandex Maps and 2GIS reviews in one feed, answered automatically."
+        },
+        {
+          "screen": "g-aura",
+          "title": "Aura answers guests",
+          "text": "AI answers your guests on Telegram and your website."
         }
       ]
     },
