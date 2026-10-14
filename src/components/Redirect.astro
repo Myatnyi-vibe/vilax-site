@@ -2,6 +2,7 @@
 // Старый адрес версии → «/» с тем же сочетанием (ТЗ медиа: /ru/, /en/, /ru/en/, /en/ru/). Остальные параметры
 // адреса (utm_*) и якорь сохраняются; тема не задаётся — её выберет «/» по запомненному или от валюты.
 import { url } from '../lib/site';
+import { MODE } from '../lib/mode';
 
 interface Props {
   lang: 'ru' | 'en';
@@ -12,7 +13,7 @@ const target = `${url('/')}?lang=${lang}&cur=${cur}`;
 ---
 
 <!doctype html>
-<html lang={lang}>
+<html lang={lang} data-mode={MODE}>
   <head>
     <meta charset="utf-8" />
     <meta name="robots" content="noindex, follow" />
