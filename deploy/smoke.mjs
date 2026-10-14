@@ -163,6 +163,7 @@ try {
     if (MODE === 'preview') {
       await page.type('#lead-name', 'Тест Проверкин');
       await page.type('#lead-phone', '+7 900 000-00-01');
+      await page.type('#lead-city', 'Тестоград');
       await page.type('#lead-company', 'Проверка превью');
       await page.click('#pricing button[type="submit"]');
       await page.waitForSelector('[data-lead-done]:not([hidden])', { timeout: 5000 }).catch(() => bad('нет экрана «Спасибо» после отправки'));
