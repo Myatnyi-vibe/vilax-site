@@ -1,392 +1,187 @@
 ---
-// Секция 3 «Платформа целиком» (SITE-1, SITE-12): схема устройства, а не карточки. Одна панель: сверху ряд блоков
-// через тонкие разделители, снизу на всю ширину — полоса Основы; от каждого блока вниз в Основу идёт нить — блоки стоят
-// на Основе. Каждая ячейка — ссылка на свою вкладку в секции 4 (#blocks-<key>). Ниже панели — «Франшиза» в пунктирной рамке.
-// В DOM Основа последняя — порядок фокуса совпадает с видимым: на компьютере она внизу на всю ширину, на телефоне
-// замыкает список с меткой «Обязательна», без нитей.
-// Тексты — словарь B (platform.json); скриптов нет, секция целиком читается без них.
-import ruPlatform from '../../content/ru/platform.json';
-import enPlatform from '../../content/en/platform.json';
-import type { Lang } from '../../i18n';
-import { typo } from '../../lib/typo';
-import SectionHead from './SectionHead.astro';
+// «Основа и три блока» (прототип «Platform»): слева плашка, H2, лид и список из четырёх пунктов — по умолчанию
+// только названия, наведение или фокус раскрывает описание (grid-rows 0fr → 1fr), остальные гаснут до .4;
+// клик открывает вкладку в «Блоках». Справа 3D-слот platform-all с подписями-плашками над блоками.
+import T from '../T.astro';
+import { siteOf } from '../../lib/content';
+import { tone, VARIANTS } from '../../lib/site';
 
-interface Props {
-  lang: Lang;
-}
-
-interface PlatformBlock {
-  key: string;
-  name: string;
-  task: string;
-  earlyAccess?: boolean;
-  pending?: boolean;
-}
-interface PlatformCopy {
-  title: string;
-  lead?: string;
-  earlyAccess: string;
-  required: string;
-  blocks: PlatformBlock[];
-  franchise?: { name?: string; text?: string };
-}
-
-const { lang } = Astro.props;
-const t = (lang === 'ru' ? ruPlatform : enPlatform) as PlatformCopy;
-const tx = (s: string) => typo(lang, s);
-
-// pending-пункты не выводятся (ТЗ: только то, что есть)
-const shown = t.blocks.filter((b) => !b.pending);
-const base = shown.find((b) => b.key === 'base');
-const blocks = shown.filter((b) => b.key !== 'base');
-// число колонок схемы = число блоков; та же сетка у полосы Основы и у «Франшизы» — тексты стоят по одним вертикалям
-const cols = Math.max(blocks.length, 1);
-const fr = t.franchise;
-const franchise = fr?.name && fr.text ? { name: fr.name, text: fr.text } : null;
+const keys = siteOf(VARIANTS[0]).blocks.map((b) => b.key);
+const block = (s: ReturnType<typeof siteOf>, k: string) => s.blocks.find((b) => b.key === k)!;
 ---
 
-<section class="sec platform" id="platform" aria-labelledby="platform-title" style={`--pf-cols: ${cols}`}>
-  <div class="container">
-    <SectionHead lang={lang} id="platform-title" title={t.title} lead={t.lead} />
-
-    <div class="pf" data-reveal>
-      <ul class="pf__list" role="list">
-        {
-          blocks.map((b, i) => (
-            <li class:list={['pf__item', 'pf__item--block', { 'is-first': i === 0, 'is-last': i === blocks.length - 1 }]}>
-              <a class="pf__link" href={`#blocks-${b.key}`}>
-                <div class="pf__head">
-                  <h3 class="pf__name">{tx(b.name)}</h3>
-                  {b.earlyAccess && <span class="pf__tag">{tx(t.earlyAccess)}</span>}
-                </div>
-                <p class="pf__task">{tx(b.task)}</p>
-                <svg class="pf__go" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path d="M8 2.5v10M3.5 8.5 8 13l4.5-4.5" />
-                </svg>
-              </a>
-            </li>
-          ))
-        }
-        {
-          base && (
-            <li class="pf__item pf__item--base">
-              <a class="pf__link" href={`#blocks-${base.key}`}>
-                <div class="pf__head">
-                  <h3 class="pf__name">{tx(base.name)}</h3>
-                  <span class="pf__tag">{tx(t.required)}</span>
-                </div>
-                <p class="pf__task">{tx(base.task)}</p>
-                <svg class="pf__go" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path d="M8 2.5v10M3.5 8.5 8 13l4.5-4.5" />
-                </svg>
-              </a>
-            </li>
-          )
-        }
-      </ul>
-    </div>
-
-    {
-      franchise && (
-        <div class="pf-fr">
-          <h3 class="pf-fr__name">{tx(franchise.name)}</h3>
-          <p class="pf-fr__text">{tx(franchise.text)}</p>
+<section id="platform" class="pl sheet pad" {...tone('platform')} data-screen-label="Platform">
+  <div class="wrap pl__out">
+    <div class="pl__grid">
+      <div class="pl__left">
+        <div data-reveal class="pl__head">
+          <span class="pill"><T get={(s) => s.platform.pill} /></span>
+          <h2 class="h2"><T get={(s) => s.platform.title} /></h2>
+          <p class="lede pl__lead"><T get={(s) => s.platform.lead} /></p>
         </div>
-      )
-    }
+        <ul class="pl__list" data-plat-list>
+          {
+            keys.map((k) => (
+              <li class="pl__li" data-plat={k}>
+                <span class="pl__row">
+                  <a href="#blocks" class="pl__name" data-open-tab={k} aria-expanded="false">
+                    <T get={(s) => block(s, k).name} />
+                  </a>
+                  {k === 'base' && (
+                    <span class="pl__tag">
+                      <T get={(s) => s.platform.required} />
+                    </span>
+                  )}
+                </span>
+                <div class="pl__rows">
+                  <div class="pl__clip">
+                    <p class="pl__task">
+                      <T get={(s) => block(s, k).task} />
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div data-vlx3d="platform-all" aria-hidden="true" class="pl__slot">
+        {keys.map((k) => <span data-vlx-label={k} class="pl__label"><T get={(s) => block(s, k).name} /></span>)}
+      </div>
+    </div>
   </div>
 </section>
 
 <style>
-  .platform {
-    --pf-pad: var(--sp-5);
-    /* внутренний радиус ячеек = радиус панели минус её граница */
-    --pf-r: calc(var(--r-md) - 1px);
+  .pl__out {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(40px, 5vw, 64px);
   }
-
-  /* панель: одна рамка на всю схему, не отдельные карточки; на светлой теме — мягкая тень темы, на тёмной её нет */
-  .pf {
-    margin-top: var(--sp-6);
-    border: 1px solid var(--hairline);
-    border-radius: var(--r-md);
-    background: var(--surface-1);
-    box-shadow: var(--shadow, none);
-  }
-  .pf__list {
+  .pl__grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 64px);
+    align-items: center;
+  }
+  @media (min-width: 1024px) {
+    .pl__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
+    }
+  }
+  .pl__left {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(32px, 3.4vw, 48px);
+    min-width: 0;
+  }
+  .pl__head {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .pl__lead {
+    max-width: 46ch;
+  }
+  .pl__list {
+    list-style: none;
     margin: 0;
     padding: 0;
-    list-style: none;
-  }
-  .pf__item {
     display: flex;
-    min-width: 0;
+    flex-direction: column;
+    gap: clamp(10px, 1.2vw, 16px);
+    max-width: 480px;
   }
-
-  /* вся ячейка — ссылка на вкладку блока в секции 4 */
-  .pf__link {
-    position: relative;
-    flex: 1 1 auto;
-    display: block;
-    min-width: 0;
-    padding: var(--pf-pad);
-    color: inherit;
-    text-decoration: none;
-    background: var(--surface-1);
-  }
-  .pf__item--base .pf__link {
-    background: var(--surface-2);
-  }
-  /* фокус внутрь ячейки: соседние ячейки не перекрывают кольцо, скругление повторяет угол панели */
-  .pf__link:focus-visible {
-    outline-offset: -2px;
-  }
-
-  .pf__head {
+  .pl__li {
     display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+    opacity: 1;
+    transition: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .pl__list[data-hover] .pl__li:not(.is-open) {
+    opacity: 0.4;
+  }
+  .pl__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
-    align-items: center;
-    gap: var(--sp-2) var(--sp-3);
-    /* место под стрелку в правом верхнем углу */
-    padding-right: var(--sp-6);
   }
-  .pf__name,
-  .pf-fr__name {
-    font-size: var(--fs-title);
-    line-height: 1.3;
+  .pl__name {
+    font-size: clamp(20px, 1.7vw, 24px);
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.018em;
+    line-height: 1.25;
     color: var(--ink);
-    text-wrap: balance;
-    overflow-wrap: break-word;
+    text-decoration: none;
   }
-  .pf__tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px var(--sp-2);
-    border: 1px solid var(--hairline-strong);
-    border-radius: var(--r-pill);
-    font-size: var(--fs-caption);
-    line-height: 1.4;
-    font-weight: 500;
-    color: var(--ink-subtle);
-    white-space: nowrap;
+  .pl__tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    padding: 5px 8px;
+    border-radius: 9999px;
+    color: var(--subtle);
+    box-shadow: inset 0 0 0 1px var(--hairS);
   }
-  .pf__task,
-  .pf-fr__text {
-    max-width: 64ch;
-    font-size: var(--fs-small);
+  .pl__rows {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .is-open .pl__rows {
+    grid-template-rows: 1fr;
+  }
+  .pl__clip {
+    overflow: hidden;
+    min-height: 0;
+  }
+  .pl__task {
+    padding-top: 8px;
+    font-size: 15px;
     line-height: 1.5;
-    color: var(--ink-muted);
-    text-wrap: pretty;
+    color: var(--muted);
+    max-width: 42ch;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+      opacity 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+      transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .pf__task {
-    margin-top: var(--sp-2);
+  .is-open .pl__task {
+    opacity: 1;
+    transform: none;
   }
-
-  /* стрелка «к блоку ниже»: тихая, на ховере темнеет и чуть сдвигается вниз */
-  .pf__go {
+  .pl__slot {
+    position: relative;
+    height: clamp(360px, 44vw, 700px);
+    width: 100%;
+  }
+  .pl__label {
     position: absolute;
-    top: calc(var(--pf-pad) + 5px);
-    right: var(--pf-pad);
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    color: var(--ink-faint);
-  }
-
-  /* ховер — ступень лестницы поверхностей; только там, где есть указатель */
-  @media (hover: hover) {
-    .pf__link:hover {
-      background: var(--surface-2);
-    }
-    .pf__item--base .pf__link:hover {
-      background: var(--surface-3);
-    }
-    .pf__link:hover .pf__go {
-      color: var(--ink);
-    }
-  }
-  .pf__link:focus-visible .pf__go {
+    left: 0;
+    top: 0;
+    z-index: 35;
+    opacity: 0;
+    width: max-content;
+    max-width: 118px;
+    text-align: center;
+    text-wrap: balance;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    padding: 6px 10px;
+    border-radius: 9999px;
+    background: var(--bg);
     color: var(--ink);
-  }
-
-  /* Франшиза: отдельной строкой под панелью, пунктир — это не блок платформы, а надстройка для управляющих компаний */
-  .pf-fr {
-    margin-top: var(--sp-4);
-    padding: var(--pf-pad);
-    border: 1px dashed var(--hairline-strong);
-    border-radius: var(--r-md);
-  }
-  .pf-fr__text {
-    margin-top: var(--sp-2);
-  }
-
-  /* Телефон и планшет: одна колонка в порядке DOM, нитей нет (на 820 четыре колонки слишком тесные — вычитка 11.10) */
-  @media (max-width: 1023px) {
-    .pf__item + .pf__item {
-      border-top: 1px solid var(--hairline);
-    }
-    .pf__item:first-child .pf__link {
-      border-radius: var(--pf-r) var(--pf-r) 0 0;
-    }
-    .pf__item:last-child .pf__link {
-      border-radius: 0 0 var(--pf-r) var(--pf-r);
-    }
-    .pf__item:only-child .pf__link {
-      border-radius: var(--pf-r);
-    }
-  }
-
-  /* Компьютер: схема — ряд блоков сверху, Основа на всю ширину снизу, нити между ними */
-  @media (min-width: 1024px) {
-    .platform {
-      --pf-pad: var(--sp-4);
-      --pf-thread: var(--sp-6);
-    }
-    .pf {
-      margin-top: var(--sp-7);
-    }
-    .pf__list {
-      grid-template-columns: repeat(var(--pf-cols, 4), minmax(0, 1fr));
-      grid-template-rows: auto 1fr auto;
-    }
-    /* строки «название · описание» общие для всех блоков (subgrid): описания стоят на одной линии */
-    .pf__item--block {
-      grid-row: 1 / span 2;
-      display: grid;
-      grid-template-rows: subgrid;
-    }
-    .pf__item--block .pf__link {
-      grid-row: 1 / span 2;
-      display: grid;
-      grid-template-rows: subgrid;
-      align-content: start;
-    }
-    .pf__item--block .pf__head {
-      align-self: start;
-    }
-    .pf__item--block .pf__task {
-      align-self: start;
-    }
-    .pf__head {
-      padding-right: calc(16px + var(--sp-2));
-    }
-
-    /* блоки: общая рамка, между ячейками — тонкие вертикальные разделители */
-    .pf__item--block + .pf__item--block {
-      border-left: 1px solid var(--hairline);
-    }
-    .pf__item--block.is-first .pf__link {
-      border-top-left-radius: var(--pf-r);
-    }
-    .pf__item--block.is-last .pf__link {
-      border-top-right-radius: var(--pf-r);
-    }
-    /* низ ячейки — зона нити: отступ от текста + длина нити */
-    .pf__item--block .pf__link {
-      padding-bottom: calc(var(--pf-thread) + var(--sp-4));
-    }
-
-    /* нить: по левой линии текста от ячейки вниз до полосы Основы, проявляется к низу */
-    .pf__item--block .pf__link::after {
-      content: '';
-      position: absolute;
-      left: var(--pf-pad);
-      bottom: 0;
-      width: 1px;
-      height: var(--pf-thread);
-      background: linear-gradient(to bottom, transparent, var(--accent-2));
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    /* узел: точка, где нить входит в Основу; центр — на линии границы полосы */
-    .pf__item--block .pf__link::before {
-      content: '';
-      position: absolute;
-      z-index: 1;
-      left: calc(var(--pf-pad) - 2px);
-      bottom: -3px;
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--accent-2);
-      pointer-events: none;
-    }
-    .pf__item--block .pf__link:focus-visible::after {
-      opacity: 1;
-    }
-
-    /* Основа: визуально внизу на всю ширину; внутри — та же сетка колонок, задача встаёт по линии второго блока */
-    .pf__item--base {
-      grid-column: 1 / -1;
-      grid-row: 3;
-      border-top: 1px solid var(--hairline);
-    }
-    .pf__item--base .pf__link {
-      display: grid;
-      grid-template-columns: repeat(var(--pf-cols, 4), minmax(0, 1fr));
-      align-items: baseline;
-      padding-inline: 0;
-      border-radius: 0 0 var(--pf-r) var(--pf-r);
-    }
-    .pf__item--base .pf__head,
-    .pf-fr__name {
-      grid-column: 1;
-      padding-inline: var(--pf-pad) var(--sp-3);
-    }
-    /* +1px — граница-разделитель перед ячейкой второго блока */
-    .pf__item--base .pf__task,
-    .pf-fr__text {
-      grid-column: 2 / -1;
-      justify-self: start;
-      margin: 0 calc(var(--pf-pad) + 16px + var(--sp-3)) 0 calc(var(--pf-pad) + 1px);
-    }
-
-    /* Франшиза в строку: название по линии Основы, текст по линии второго блока */
-    .pf-fr {
-      display: grid;
-      grid-template-columns: repeat(var(--pf-cols, 4), minmax(0, 1fr));
-      align-items: baseline;
-      padding: var(--sp-5) 0;
-    }
-    .pf-fr__text {
-      margin-right: var(--pf-pad);
-    }
-
-    @media (hover: hover) {
-      .pf__item--block .pf__link:hover::after {
-        opacity: 1;
-      }
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .platform {
-      --pf-pad: var(--sp-6);
-      --pf-thread: var(--sp-7);
-    }
-    .pf__head {
-      padding-right: var(--sp-6);
-    }
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .pf__go {
-      transition: transform 0.2s var(--ease-ui);
-    }
-    .pf__link::after {
-      transition: opacity 0.2s var(--ease-ui);
-    }
-    @media (hover: hover) {
-      .pf__link:hover .pf__go {
-        transform: translateY(2px);
-      }
-    }
+    box-shadow:
+      0 0 0 1px var(--hair),
+      0 4px 14px rgb(2 8 23/0.08);
+    pointer-events: none;
+    will-change: transform;
   }
 </style>

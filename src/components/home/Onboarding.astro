@@ -1,247 +1,102 @@
 ---
-// Секция 7 «Как подключаем» (SITE-1): путь из шагов как одна нить — узлы на линии, последний («Работа») залит акцентом.
-// Компьютер — по горизонтали, ниже 1024 px — по вертикали, линия слева. Под шагами — панель «Что входит в онбординг».
-// Тексты — словарь B (onboarding.json: title, steps[title, text], included{title, text}); скриптов нет, движение — data-reveal.
-import ruOnboarding from '../../content/ru/onboarding.json';
-import enOnboarding from '../../content/en/onboarding.json';
-import SectionHead from './SectionHead.astro';
-import { typo } from '../../lib/typo';
-import type { Lang } from '../../i18n';
+// «Как подключаем» (прототип «Onboarding»): H2, 3D-лента (только ≥ 768), пять шагов, карточка «включено».
+import T from '../T.astro';
+import { siteOf } from '../../lib/content';
+import { tone, VARIANTS } from '../../lib/site';
 
-interface Props {
-  lang: Lang;
-}
-
-interface OnboardingCopy {
-  title: string;
-  lead?: string;
-  steps?: { title: string; text?: string }[];
-  included?: { title?: string; text?: string };
-}
-
-const { lang } = Astro.props;
-const t = (lang === 'ru' ? ruOnboarding : enOnboarding) as OnboardingCopy;
-// пустые шаги не выводим; пустой список — без линии
-const steps = (t.steps ?? []).filter((s) => s && s.title);
+const steps = siteOf(VARIANTS[0]).onboarding.steps.map((_, i) => i);
 const last = steps.length - 1;
-const inc = t.included;
-const showIncluded = !!(inc && (inc.title || inc.text));
 ---
 
-<section class="sec onb" id="onboarding" aria-labelledby="onboarding-title">
-  <div class="container">
-    <SectionHead lang={lang} id="onboarding-title" title={t.title} lead={t.lead} />
-
-    {
-      steps.length > 0 && (
-        <ol class="onb__steps" role="list" style={`--n: ${steps.length}`}>
-          {steps.map((s, i) => (
-            <li
-              class:list={['onb__step', i === last && 'onb__step--live']}
-              data-reveal
-              style={`--reveal-delay: ${i * 80}ms`}
-            >
-              <span class="onb__node" aria-hidden="true" />
-              <h3 class="onb__title">{typo(lang, s.title)}</h3>
-              {s.text && <p class="onb__text">{typo(lang, s.text)}</p>}
-            </li>
-          ))}
-        </ol>
-      )
-    }
-
-    {
-      showIncluded && (
-        <div class="onb__included">
-          {inc?.title && <h3 class="onb__inc-title">{typo(lang, inc.title)}</h3>}
-          {inc?.text && <p class="onb__inc-text">{typo(lang, inc.text)}</p>}
-        </div>
-      )
-    }
+<section id="onboarding" class="ob sheet pad" {...tone('onboarding')} data-screen-label="Onboarding">
+  <div class="wrap ob__out">
+    <h2 data-reveal class="h2"><T get={(s) => s.onboarding.title} /></h2>
+    <div data-vlx3d="onboarding" aria-hidden="true" class="ob__slot"></div>
+    <ol class="ob__steps">
+      {
+        steps.map((i) => (
+          <li data-reveal class:list={['ob__step', { 'ob__step--last': i === last }]}>
+            <h3 class="ob__h3">
+              <T get={(s) => s.onboarding.steps[i].title} />
+            </h3>
+            <p class="ob__p">
+              <T get={(s) => s.onboarding.steps[i].text} />
+            </p>
+          </li>
+        ))
+      }
+    </ol>
+    <div data-reveal class="ob__inc">
+      <h3 class="ob__inch3"><T get={(s) => s.onboarding.included.title} /></h3>
+      <p class="ob__incp"><T get={(s) => s.onboarding.included.text} /></p>
+    </div>
   </div>
 </section>
 
 <style>
-  .onb {
-    --node: 10px;
-    /* центр узла — на середине первой строки заголовка шага (строка 1.3) */
-    --node-y: calc((var(--fs-title) * 1.3 - var(--node)) / 2);
+  .ob__out {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(24px, 3vw, 40px);
   }
-
-  .onb__steps {
-    margin: var(--sp-7) 0 0;
-    padding: 0;
+  .ob__slot {
+    height: clamp(150px, 15vw, 220px);
+    width: 100%;
+  }
+  @media (max-width: 767.98px) {
+    .ob__slot {
+      display: none;
+    }
+  }
+  .ob__steps {
     list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(20px, 2vw, 32px);
   }
-  .onb__step {
-    position: relative;
+  @media (max-width: 767.98px) {
+    .ob__steps {
+      grid-template-columns: 1fr;
+    }
   }
-  /* узел: кружок на нити, фон canvas перекрывает линию под ним */
-  .onb__node {
-    position: absolute;
-    left: 0;
-    width: var(--node);
-    height: var(--node);
-    border: 1px solid var(--hairline-strong);
-    border-radius: 50%;
-    background: var(--canvas);
+  .ob__step {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 20px;
+    border-top: 1px solid var(--hairS);
   }
-  /* «Работа» — единственный акцент секции */
-  .onb__step--live .onb__node {
-    border-color: var(--accent);
-    background: var(--accent);
+  .ob__step--last {
+    border-top: 2px solid var(--accent);
   }
-  .onb__title {
-    font-size: var(--fs-title);
+  .ob__h3 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     line-height: 1.3;
+  }
+  .ob__p {
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .ob__inc {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 12px 48px;
+    padding: 28px;
+    border-radius: 12px;
+    background: var(--surf);
+    box-shadow: inset 0 2px 0 var(--accent);
+  }
+  .ob__inch3 {
+    font-size: 20px;
     font-weight: 600;
-    letter-spacing: -0.01em;
-    text-wrap: balance;
+    line-height: 1.3;
   }
-  .onb__text {
-    margin-top: var(--sp-2);
-    max-width: 56ch;
-    font-size: var(--fs-small);
-    line-height: 1.5;
-    color: var(--ink-muted);
-    text-wrap: pretty;
-  }
-
-  /* Компьютер: шаги в ряд, над ними одна линия от первого узла до последнего */
-  @media (min-width: 1024px) {
-    .onb__steps {
-      position: relative;
-      display: grid;
-      grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr));
-      column-gap: var(--sp-5);
-    }
-    .onb__steps::before {
-      content: '';
-      position: absolute;
-      top: calc(var(--node) / 2 - 1px);
-      left: calc(var(--node) / 2);
-      /* обрыв на узле последней колонки: ширина колонки минус половина узла */
-      right: calc((100% - (var(--n, 5) - 1) * var(--sp-5)) / var(--n, 5) - var(--node) / 2);
-      height: 1px;
-      background: var(--hairline-strong);
-    }
-    .onb__step {
-      padding-top: calc(var(--node) + var(--sp-5));
-    }
-    .onb__node {
-      top: 0;
-    }
-    /* тексты шагов начинаются на одной высоте, даже если заголовок в соседней колонке в две строки */
-    @supports (grid-template-rows: subgrid) {
-      .onb__steps {
-        row-gap: var(--sp-2);
-      }
-      .onb__step {
-        display: grid;
-        grid-row: span 2;
-        grid-template-rows: subgrid;
-      }
-      .onb__text {
-        margin-top: 0;
-      }
-    }
-  }
-
-  /* Нить тянется слева направо, когда шаги появляются (класс is-in ставит Reveal.astro). Только transform. */
-  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-    @supports selector(:has(*)) {
-      :global(.reveal-on) .onb__steps::before {
-        transform: scaleX(0);
-        transform-origin: left center;
-        transition: transform 1.1s var(--ease-out);
-      }
-      :global(.reveal-on) .onb__steps:has(.is-in)::before {
-        transform: none;
-      }
-    }
-  }
-
-  /* Планшет и телефон: шаги сверху вниз, линия слева; узел — у заголовка, текст справа от линии */
-  @media (max-width: 1023px) {
-    .onb__step {
-      padding: 0 0 var(--sp-6) calc(var(--node) + var(--sp-4));
-    }
-    .onb__step:last-child {
-      padding-bottom: 0;
-    }
-    .onb__node {
-      top: var(--node-y);
-    }
-    /* участок нити: от своего узла до узла следующего шага (сдвиг появления идёт вдоль линии — она не рвётся) */
-    .onb__step:not(:last-child)::before {
-      content: '';
-      position: absolute;
-      left: calc(var(--node) / 2 - 1px);
-      top: calc(var(--node-y) + var(--node) / 2);
-      bottom: calc(-1 * (var(--node-y) + var(--node) / 2));
-      width: 1px;
-      background: var(--hairline-strong);
-    }
-  }
-  /* Планшет: заголовок и текст шага в две колонки */
-  @media (min-width: 768px) and (max-width: 1023px) {
-    .onb__step {
-      display: grid;
-      grid-template-columns: minmax(0, 13rem) minmax(0, 1fr);
-      column-gap: var(--sp-5);
-      align-items: baseline;
-    }
-    .onb__text {
-      margin-top: 0;
-    }
-  }
-
-  /* Что входит в онбординг: поверхность 1, тонкая граница, слева полоса акцента на высоту текста */
-  .onb__included {
-    position: relative;
-    margin-top: var(--sp-8);
-    padding: var(--sp-5) var(--sp-6);
-    border: 1px solid var(--hairline);
-    border-radius: var(--r-md);
-    background: var(--surface-1);
-  }
-  .onb__included::before {
-    content: '';
-    position: absolute;
-    left: -1px;
-    top: var(--sp-5);
-    bottom: var(--sp-5);
-    width: 2px;
-    border-radius: var(--r-pill);
-    background: var(--accent);
-  }
-  .onb__inc-title {
-    font-size: var(--fs-body-lg);
-    line-height: 1.4;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    text-wrap: balance;
-  }
-  .onb__inc-text {
-    max-width: 64ch;
-    font-size: var(--fs-body);
-    line-height: 1.55;
-    color: var(--ink-muted);
-    text-wrap: pretty;
-  }
-  .onb__inc-title + .onb__inc-text {
-    margin-top: var(--sp-2);
-  }
-  /* до 8 колонок из 12 (промежуток сетки 24 px), не во всю ширину */
-  @media (min-width: 1024px) {
-    .onb__included {
-      max-width: calc((100% + var(--sp-5)) * 8 / 12 - var(--sp-5));
-    }
-  }
-  @media (max-width: 767px) {
-    .onb__included {
-      margin-top: var(--sp-7);
-      padding: var(--sp-5);
-    }
+  .ob__incp {
+    font-size: 16px;
+    color: var(--muted);
   }
 </style>

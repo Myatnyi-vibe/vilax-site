@@ -128,41 +128,44 @@ async function visit(path, { expectStatus = 200 } = {}) {
 }
 
 try {
-  for (const p of ['', 'ru/', 'en/', 'privacy', 'terms', 'support', 'ru/privacy', 'ru/terms', 'ru/support', 'ru/consent', 'en/consent', 'en/privacy']) {
+  for (const p of ['', 'privacy', 'terms', 'support', 'ru/privacy', 'ru/terms', 'ru/support', 'ru/consent', 'en/consent', 'en/privacy']) {
     await step(p || '/', () => visit(p));
   }
   await step('404', () => visit('__smoke-missing', { expectStatus: 404 }));
 
-  // экран выбора: выбор запоминается, «Сменить версию» (#choose) не уводит
-  await step('экран выбора', async () => {
-    // чистый профиль: страницы версий выше уже запомнили выбор в localStorage
+  // одна страница: старые адреса версий ведут на «/» с сочетанием, переключатели меняют только свою ось и запоминаются
+  await step('переключатели', async () => {
     const ctx = await browser.createBrowserContext();
-    const { page, bad } = await openPage('экран выбора', ctx);
+    const { page, bad } = await openPage('переключатели', ctx);
+    const axes = () => page.evaluate(() => [document.documentElement.lang, document.documentElement.dataset.currency, document.documentElement.dataset.theme].join(' '));
+    for (const [old, want] of [['ru/', 'ru rub'], ['en/', 'en aed'], ['ru/en/', 'en rub'], ['en/ru/', 'ru aed']]) {
+      await page.goto(at(old), { waitUntil: 'networkidle0' });
+      if (!page.url().startsWith(at(''))) bad(`${old} не ведёт на «/»: ${page.url()}`);
+      const got = (await axes()).split(' ').slice(0, 2).join(' ');
+      if (got !== want) bad(`${old} → сочетание «${got}», ожидалось «${want}»`);
+    }
+    await page.goto(at('?lang=ru&cur=rub&theme=dark'), { waitUntil: 'networkidle0' });
+    await page.click('.hdr [data-set-cur="aed"]');
+    if ((await axes()) !== 'ru aed dark') bad(`валюта поменяла не только себя: ${await axes()}`);
+    await page.click('.hdr [data-set-lang="en"]');
+    if ((await axes()) !== 'en aed dark') bad(`язык поменял не только себя: ${await axes()}`);
+    await page.click('.hdr [data-theme-toggle]');
+    if ((await axes()) !== 'en aed light') bad(`тема поменяла не только себя: ${await axes()}`);
     await page.goto(at(''), { waitUntil: 'networkidle0' });
-    await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.click('[data-version="ru"]')]);
-    if (!page.url().startsWith(at('ru/'))) bad(`выбор РФ привёл на ${page.url()}`);
-    await page.goto(at(''), { waitUntil: 'networkidle0' });
-    if (!page.url().startsWith(at('ru/'))) bad(`повторный заход не запомнил выбор: ${page.url()}`);
-    await page.goto(at('#choose'), { waitUntil: 'networkidle0' });
-    if (!page.url().endsWith('#choose')) bad(`«Сменить версию» увела на ${page.url()}`);
+    if ((await axes()) !== 'en aed light') bad(`выбор не пережил перезагрузку: ${await axes()}`);
     await ctx.close();
   });
 
-  // форма «Запросить демо» на /ru/
+  // форма заявки на «/»: в превью ничего не уходит наружу
   await step('форма', async () => {
     const { page, bad, outside } = await openPage('форма');
-    await page.goto(at('ru/'), { waitUntil: 'networkidle0' });
-    await page.evaluate(() => window.dispatchEvent(new CustomEvent('vilax:demo', { detail: { section: 'hero' } })));
-    await page.waitForSelector('dialog[data-lead][open]', { timeout: 5000 });
+    await page.goto(at('?lang=ru&cur=rub'), { waitUntil: 'networkidle0' });
     if (MODE === 'preview') {
-      await page.type('#lead-phone', '900 000-00-01');
       await page.type('#lead-name', 'Тест Проверкин');
-      await page.type('#lead-city', 'Тестоград');
-      await page.type('#lead-venue', 'Проверка превью');
-      await page.click('#lead-consent');
-      await new Promise((r) => setTimeout(r, 3200)); // форма не отправляет быстрее 3 с (MIN_FILL_MS)
-      await page.click('[data-lead-submit]');
-      await page.waitForSelector('[data-lead-view="preview"]:not([hidden])', { timeout: 5000 }).catch(() => bad('нет плашки «Превью: заявка не отправлена»'));
+      await page.type('#lead-phone', '+7 900 000-00-01');
+      await page.type('#lead-company', 'Проверка превью');
+      await page.click('#pricing button[type="submit"]');
+      await page.waitForSelector('[data-lead-done]:not([hidden])', { timeout: 5000 }).catch(() => bad('нет экрана «Спасибо» после отправки'));
       if (outside.length) bad(`форма превью ходила наружу: ${outside.join(', ')}`);
     }
     await page.close();
@@ -177,4 +180,4 @@ if (errors.length) {
   for (const e of [...new Set(errors)].slice(0, 50)) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log(`smoke (${MODE}${BASE ? `, ${BASE}` : ''}): чисто — 13 страниц, экран выбора, форма`);
+console.log(`smoke (${MODE}${BASE ? `, ${BASE}` : ''}): чисто — 11 страниц, переключатели и старые адреса, форма`);

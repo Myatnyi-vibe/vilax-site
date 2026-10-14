@@ -1,6 +1,6 @@
 // Правовые тексты лежат в src/content/{ru,en}/legal/*.html (владелец — сессия C).
 // Здесь только загрузка: страницы /privacy, /terms, /support и /ru/-версии отдают их по прежним адресам.
-import type { Lang } from '../i18n';
+import type { Lang } from './site';
 import { BASE } from './site';
 
 export type LegalDoc = 'privacy' | 'terms' | 'support' | 'consent';

@@ -228,3 +228,62 @@ export function outcomeOf(status: number, body: unknown): Outcome {
   }
   return { kind: 'failed' };
 }
+
+// ── Форма дизайна 14.10.2026 (SITE-26): имя, телефон, компания, «У меня сеть» + количество локаций. ──
+// Поля → приёмник: company → venue; chain/locations → segment и calc.locations; region — по валюте (₽ → RU, AED → AE);
+// site — язык страницы. «Город» — решение Данила 14.10.2026 по Р-23: поле добавлено тем же компонентом (приёмник его требует).
+
+export type LeadCur = 'rub' | 'aed';
+export const CUR_REGION: Record<LeadCur, string> = { rub: 'RU', aed: 'AE' };
+const CUR_COUNTRY: Record<LeadCur, Country> = { rub: '7', aed: '971' };
+
+export interface DesignLead {
+  name: string; phone: string; city: string; company: string; chain: boolean; locations: string;
+}
+export type DesignField = 'name' | 'phone' | 'city' | 'company' | 'locations';
+/**
+ * Ошибки по правилам дизайна: пусто — 'name' | 'phone' | 'city' | 'company'; телефон не 10–15 цифр — 'phoneBad';
+ * город не по правилам приёмника (2–80 знаков, буквы, без ссылок) — 'cityBad'; сеть < 2 — 'locations'.
+ */
+export type DesignErrors = Partial<Record<DesignField, 'name' | 'phone' | 'phoneBad' | 'city' | 'cityBad' | 'company' | 'locations'>>;
+
+/** Проверка как в прототипе (submitLead): имя, телефон 10–15 цифр, компания, при сети — от 2 локаций. */
+export function checkDesignLead(x: DesignLead): DesignErrors {
+  const e: DesignErrors = {};
+  const n = digits(x.phone).length;
+  if (!x.name.trim()) e.name = 'name';
+  if (!n) e.phone = 'phone';
+  else if (n < 10 || n > 15) e.phone = 'phoneBad';
+  if (!x.city.trim()) e.city = 'city';
+  else if (cleanText('city', x.city) === null) e.city = 'cityBad';
+  if (!x.company.trim()) e.company = 'company';
+  if (x.chain && !(parseInt(x.locations, 10) >= 2)) e.locations = 'locations';
+  return e;
+}
+
+/** Телефон для приёмника: сначала по стране валюты (+7 / +971), иначе как номер другой страны (10–15 цифр). */
+export function designPhone(cur: LeadCur, raw: string): string | null {
+  return phoneDigits(CUR_COUNTRY[cur], raw) ?? phoneDigits('other', raw);
+}
+
+export interface DesignMeta {
+  cur: LeadCur; lang: LeadSite; section: string | null; page: string | null; utm: Record<string, string> | null;
+  consentVersion: string; requestRef: string; honeypot: string; elapsedMs: number;
+}
+
+/** Тело запроса к приёмнику SITE-15 из формы дизайна (поля уже прошли checkDesignLead). */
+export function designBody(x: DesignLead, m: DesignMeta): Record<string, unknown> {
+  const phone = designPhone(m.cur, x.phone);
+  const locations = x.chain ? Math.max(2, Math.min(10_000, parseInt(x.locations, 10) || 2)) : 1;
+  return {
+    phone: phone ? `+${phone}` : x.phone.trim(),
+    name: x.name.normalize('NFC').replace(/\s+/gu, ' ').trim(),
+    city: cleanText('city', x.city),
+    venue: x.company.normalize('NFC').replace(/\s+/gu, ' ').trim(),
+    consent: true, consent_version: m.consentVersion, request_ref: m.requestRef,
+    site: m.lang, region: CUR_REGION[m.cur], segment: x.chain ? 'chain' : 'independent',
+    section: m.section, page: m.page, utm: m.utm,
+    calc: calcOf({ locations, cur: m.cur === 'rub' ? 'RUB' : 'AED' }),
+    website: m.honeypot, elapsed_ms: Math.max(0, Math.min(86_400_000, Math.round(m.elapsedMs))),
+  };
+}

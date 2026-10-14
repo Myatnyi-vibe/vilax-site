@@ -1,232 +1,74 @@
 ---
-// Секция 10 «Вопросы» (SITE-1): тихий аккордеон на нативных <details> — открывается мышью, с клавиатуры и без скриптов.
-// Компьютер: слева заголовок (4 колонки, прилипает), справа список (8 колонок); телефон — одна колонка, заголовок не липкий.
-// Тексты — словарь B (faq.json: title, items[q, a]). Цифры в ответах ({annualDiscount}, {coordinatorIncluded}) —
-// из src/data/prices.json через versionVars() и fill(); неизвестный ключ остаётся как есть — его поймает тест цен.
-import ruFaq from '../../content/ru/faq.json';
-import enFaq from '../../content/en/faq.json';
-import type { Lang } from '../../i18n';
-import { versionVars, fill } from '../../lib/pricing-text';
-import { typo } from '../../lib/typo';
-import SectionHead from './SectionHead.astro';
-
-interface Props {
-  lang: Lang;
-}
-
-interface FaqCopy {
-  title: string;
-  lead?: string;
-  items?: Array<{ q: string; a: string }>;
-}
-
-const { lang } = Astro.props;
-const t = (lang === 'ru' ? ruFaq : enFaq) as FaqCopy;
-// пустые пары не выводим: вопрос без ответа хуже, чем его отсутствие
-const items = (t.items ?? []).filter((x) => x.q?.trim() && x.a?.trim());
-
-// Подстановки версии для любой модели цены (v16 — ОАЭ, blocks — сеть РФ): src/lib/pricing-text.ts (B).
-const v = versionVars(lang);
-const f = (s: string) => typo(lang, fill(s, v));
+// Вопросы (прототип «FAQ»): H2 sticky top 96, список <details>. Вопросы про франшизу убраны (решения владельца 13.10).
+import T from '../T.astro';
+import { siteOf } from '../../lib/content';
+import { tone, VARIANTS } from '../../lib/site';
 ---
 
-{
-  items.length > 0 && (
-    <section class="sec faq" id="faq" aria-labelledby="faq-title">
-      <div class="container faq__grid">
-        <div class="faq__head" data-reveal>
-          <SectionHead lang={lang} id="faq-title" title={t.title} lead={t.lead} />
-        </div>
-        <ul class="faq__list" role="list" data-reveal style="--reveal-delay: 80ms">
-          {items.map((x) => (
-            <li class="faq__item">
-              <details class="faq__d">
-                <summary class="faq__q">
-                  <span class="faq__q-text">{f(x.q)}</span>
-                  <span class="faq__icon" aria-hidden="true" />
+<section id="faq" class="fq sheet pad" {...tone('faq')} data-screen-label="FAQ">
+  <div class="wrap fq__grid">
+    <h2 class="h2 fq__h2"><T get={(s) => s.faq.title} /></h2>
+    <div class="fq__list">
+      {
+        VARIANTS.map((v) => (
+          <div class="v" data-cur={v.cur} data-lang={v.lang}>
+            {siteOf(v).faq.items.map((q) => (
+              <details class="fq__d">
+                <summary class="fq__s">
+                  {q.q}
+                  <span aria-hidden="true" class="fq__plus">+</span>
                 </summary>
-                <div class="faq__a">
-                  <p>{f(x.a)}</p>
-                </div>
+                <p class="fq__a">{q.a}</p>
               </details>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  )
-}
+            ))}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
 
 <style>
-  /* сетка 12: заголовок 1–5, список 6–12 — как у AI, интеграций и блоков */
-  .faq__grid {
+  .fq__grid {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    column-gap: var(--sp-5);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: clamp(24px, 5vw, 80px);
     align-items: start;
   }
-  .faq__head {
-    grid-column: 1 / span 5;
+  .fq__h2 {
     position: sticky;
-    top: calc(var(--header-h) + var(--sp-6));
+    top: 96px;
   }
-  .faq__list {
-    grid-column: 6 / -1;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  /* разделители — тонкие линии между пунктами и по краям списка */
-  .faq__item {
-    border-top: 1px solid var(--hairline);
-    overflow-wrap: break-word;
-  }
-  .faq__item:last-child {
-    border-bottom: 1px solid var(--hairline);
-  }
-
-  /* вопрос: весь ряд кликабелен, стандартный треугольник убран */
-  .faq__q {
+  .fq__list {
     display: flex;
-    align-items: flex-start;
-    gap: var(--sp-5);
-    min-height: 56px;
-    padding-block: var(--sp-5);
-    list-style: none;
+    flex-direction: column;
+    grid-column: span 1;
+  }
+  .fq__d {
+    border-top: 1px solid var(--hairS);
+    padding: 4px 0;
+  }
+  .fq__s {
     cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .faq__q::-webkit-details-marker {
-    display: none;
-  }
-  .faq__q::marker {
-    content: '';
-  }
-  .faq__q:focus-visible {
-    outline-offset: 4px;
-    border-radius: var(--r-xs);
-  }
-  /* открытый пункт: ответ ближе к вопросу */
-  .faq__d[open] > .faq__q {
-    padding-bottom: var(--sp-3);
-  }
-  .faq__q-text {
-    flex: 1 1 auto;
-    min-width: 0;
-    font-size: var(--fs-body-lg);
-    font-weight: 550;
-    line-height: 1.4;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: center;
+    padding: 18px 0;
+    font-size: 18px;
+    font-weight: 600;
     letter-spacing: -0.01em;
-    color: var(--ink);
-    text-wrap: pretty;
   }
-
-  /* «+» из двух линий; в открытом пункте вертикальная ложится на горизонтальную — «−» */
-  .faq__icon {
-    position: relative;
+  .fq__plus {
     flex: none;
-    width: 16px;
-    /* высота первой строки вопроса: значок стоит напротив неё и при переносе */
-    height: calc(var(--fs-body-lg) * 1.4);
-    color: var(--ink-subtle);
-    transition: color 0.2s var(--ease-ui);
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--subtle);
   }
-  .faq__icon::before,
-  .faq__icon::after {
-    content: '';
-    position: absolute;
-    left: 1px;
-    top: calc(50% - 0.75px);
-    width: 14px;
-    height: 1.5px;
-    border-radius: 1px;
-    background: currentColor;
-  }
-  .faq__icon::after {
-    transform: rotate(90deg);
-  }
-  .faq__d[open] .faq__icon::after {
-    transform: rotate(180deg);
-  }
-  .faq__d[open] .faq__icon {
-    color: var(--ink);
-  }
-  @media (hover: hover) {
-    .faq__q:hover .faq__icon {
-      color: var(--ink);
-    }
-  }
-
-  /* ответ: приглушённый текст до 64 знаков, справа место под колонку значка */
-  .faq__a {
-    padding: 0 calc(16px + var(--sp-5)) var(--sp-5) 0;
-  }
-  .faq__a p {
+  .fq__a {
+    padding: 0 0 20px;
+    font-size: 16px;
+    color: var(--muted);
     max-width: 64ch;
-    font-size: var(--fs-body);
-    line-height: 1.6;
-    color: var(--ink-muted);
-    text-wrap: pretty;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .faq__icon::after {
-      transition: transform 0.24s var(--ease-ui);
-    }
-    /* ответ проявляется при каждом открытии: прозрачность и сдвиг на 4 px */
-    .faq__d[open] .faq__a p {
-      animation: faq-answer-in 0.32s var(--ease-out) both;
-    }
-    /* плавная высота — только где браузер умеет ::details-content и interpolate-size;
-       в остальных пункт открывается сразу, это и есть откат */
-    @supports (interpolate-size: allow-keywords) {
-      .faq {
-        interpolate-size: allow-keywords;
-      }
-      .faq__d::details-content {
-        block-size: 0;
-        overflow-y: clip;
-        transition:
-          block-size 0.28s var(--ease-ui),
-          content-visibility 0.28s allow-discrete;
-      }
-      .faq__d[open]::details-content {
-        block-size: auto;
-      }
-    }
-  }
-  @keyframes faq-answer-in {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  /* телефон: одна колонка, заголовок в потоке */
-  @media (max-width: 767px) {
-    .faq__grid {
-      grid-template-columns: minmax(0, 1fr);
-      row-gap: var(--sp-6);
-    }
-    .faq__head,
-    .faq__list {
-      grid-column: 1;
-    }
-    .faq__head {
-      position: static;
-    }
-    .faq__q {
-      gap: var(--sp-4);
-      padding-block: var(--sp-4);
-    }
-    .faq__a {
-      padding-right: 0;
-      padding-bottom: var(--sp-4);
-    }
   }
 </style>

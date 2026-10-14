@@ -1,33 +1,26 @@
 ---
 // Аналитика за выключателем (Р-11): без номера счётчика (PUBLIC_VILAX_YM_ID) компонент не выводит ничего.
 // С номером — плашка согласия на cookie; Яндекс Метрика грузится только после «Разрешить», без Вебвизора.
-// Решение хранится в localStorage (vilax.consent); «Настройки cookie» в подвале открывают плашку снова.
-// Цели — src/lib/analytics.ts (GOALS); до согласия события не копятся и никуда не уходят.
+// Решение хранится в localStorage (vilax.consent). Цели — src/lib/analytics.ts (GOALS); до согласия события не копятся.
+// Плашки нет в прототипе дизайна: она появляется только с номером счётчика, вид — токены листа.
+import T from '../T.astro';
+import { va } from '../../lib/content';
 import { ANALYTICS_ON, YM_ID } from '../../lib/analytics';
-import { legalPath } from '../../lib/site';
-import { typo } from '../../lib/typo';
-import { ui, type Lang } from '../../i18n';
-
-interface Props {
-  lang: Lang;
-}
-
-const { lang } = Astro.props;
-const t = ui(lang).consent;
+import { legalPath, LEGAL_LANG, tone } from '../../lib/site';
 ---
 
 {
   ANALYTICS_ON && (
-    <section class="consent" data-consent data-ym={YM_ID} role="region" aria-label={t.label} hidden>
+    <section class="consent" data-consent data-ym={YM_ID} role="region" {...va('aria-label', (_, u) => u.consent.label)} {...tone('form')} hidden>
       <p class="consent__text">
-        {typo(lang, t.text)}{' '}<a href={legalPath(lang, 'privacy')}>{t.policy}</a>
+        <T get={(_, u) => u.consent.text} />{' '}<a {...va('href', (_, __, v) => legalPath(LEGAL_LANG[v.cur], 'privacy'))}><T get={(_, u) => u.consent.policy} /></a>
       </p>
       <div class="consent__actions">
-        <button class="btn btn--primary btn--sm" type="button" data-consent-accept>
-          {t.accept}
+        <button class="consent__b consent__b--accent" type="button" data-consent-accept>
+          <T get={(_, u) => u.consent.accept} />
         </button>
-        <button class="btn btn--secondary btn--sm" type="button" data-consent-decline>
-          {t.decline}
+        <button class="consent__b" type="button" data-consent-decline>
+          <T get={(_, u) => u.consent.decline} />
         </button>
       </div>
     </section>
@@ -96,7 +89,7 @@ const t = ui(lang).consent;
         box.querySelector<HTMLButtonElement>('[data-consent-accept]')?.focus({ preventScroll: true });
       }
       if (!on && hadFocus) {
-        (opener ?? document.getElementById('main'))?.focus({ preventScroll: true });
+        (opener ?? document.getElementById('top'))?.focus({ preventScroll: true });
         opener = null;
       }
     };
@@ -120,8 +113,8 @@ const t = ui(lang).consent;
 
     // события сайта → цели
     document.addEventListener('click', (e) => {
-      const el = (e.target as Element | null)?.closest<HTMLElement>('[data-demo]');
-      if (el) goal(GOALS.demo, { section: el.dataset.demo });
+      const el = (e.target as Element | null)?.closest<HTMLElement>('[data-go-cta]');
+      if (el) goal(GOALS.demo, { section: el.closest('section')?.id ?? 'header' });
     });
     let calcSent = false;
     addEventListener('vilax:calc', () => {
@@ -153,37 +146,45 @@ const t = ui(lang).consent;
   .consent {
     position: fixed;
     z-index: 60;
-    left: var(--gutter);
-    bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+    left: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     max-width: 34rem;
-    padding: var(--sp-4) var(--sp-5);
-    border: 1px solid var(--hairline-strong);
-    border-radius: var(--r-md);
-    background: var(--surface-1);
-    box-shadow: 0 16px 48px rgb(2 8 23 / 0.28);
-    color: var(--ink-muted);
-    font-size: var(--fs-small);
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px var(--hair), 0 16px 48px rgb(2 8 23 / 0.28);
+    color: var(--muted);
+    font-size: 14px;
     line-height: 1.5;
   }
   .consent[hidden] {
     display: none;
   }
-  .consent__text a {
-    color: var(--link);
-  }
   .consent__actions {
-    margin-top: var(--sp-3);
+    margin-top: 12px;
     display: flex;
     flex-wrap: wrap;
-    gap: var(--sp-2);
+    gap: 8px;
+  }
+  .consent__b {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1px solid var(--hairS);
+    background: transparent;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .consent__b--accent {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--onAccent);
   }
   @media (max-width: 767px) {
     .consent {
-      right: var(--gutter);
+      right: 16px;
       max-width: none;
-    }
-    .consent__actions .btn {
-      flex: 1 1 auto;
     }
   }
 </style>

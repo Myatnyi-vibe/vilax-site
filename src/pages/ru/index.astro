@@ -1,21 +1,5 @@
 ---
-import Version from '../../layouts/Version.astro';
-import { homePath } from '../../lib/site';
-import Home from '../../components/home/Home.astro';
-import { ui } from '../../i18n';
-import { organizationLd, softwareLd } from '../../lib/seo';
-
-const t = ui('ru');
+import Redirect from '../../components/Redirect.astro';
 ---
 
-<Version
-  lang="ru"
-  title={t.meta.title}
-  description={t.meta.description}
-  path={homePath('ru')}
-  alternates={{ ru: homePath('ru'), en: homePath('en') }}
-  overHero
-  jsonLd={[organizationLd(), softwareLd('ru', t.meta.description)]}
->
-  <Home lang="ru" />
-</Version>
+<Redirect lang="ru" cur="rub" />

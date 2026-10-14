@@ -1,46 +1,28 @@
 ---
-// Плашка режима сборки: «Локальная версия» или «Превью». В prod не выводится.
+// Плашка режима сборки: «Локальная версия» или «Превью». В prod не выводится. В прототипе дизайна её нет —
+// она служебная (не уходит на vilax.ai); при сверке с прототипом её область исключается.
+import T from '../T.astro';
 import { MODE } from '../../lib/mode';
-import { ui, type Lang } from '../../i18n';
-
-interface Props {
-  lang: Lang;
-}
-
-const t = ui(Astro.props.lang);
-const label = MODE === 'local' ? t.chrome.modeLocal : MODE === 'preview' ? t.chrome.modePreview : null;
+import { tone } from '../../lib/site';
+const on = MODE === 'local' || MODE === 'preview';
 ---
 
-{label && <p class="mode-badge" role="note">{label}</p>}
+{on && <p class="mode-badge" role="note" {...tone('base')} data-mode-badge><T get={(_, u) => (MODE === 'local' ? u.chrome.modeLocal : u.chrome.modePreview)} /></p>}
 
 <style>
-  /* Подвал не прячется под плашкой. */
-  :global(html:not([data-mode='prod']) .ftr) {
-    padding-bottom: 72px;
-  }
   .mode-badge {
     position: fixed;
     left: 12px;
     bottom: 12px;
-    z-index: var(--z-toast);
+    z-index: 70;
+    margin: 0;
     padding: 6px 10px;
-    border-radius: var(--r-sm);
-    border: 1px dashed var(--hairline-strong);
-    background: rgb(var(--canvas-rgb) / 0.9);
-    color: var(--ink-subtle);
+    border-radius: 8px;
+    border: 1px dashed var(--hairS);
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    color: var(--subtle);
     font-size: 12px;
     line-height: 1.2;
     pointer-events: none;
-  }
-  /* На телефоне внизу прилипает итог калькулятора — плашка уходит наверх, под шапку;
-     закреплённые экраны (сцена слияния) отступают на её высоту через --badge-space. */
-  @media (max-width: 767px) {
-    :global(html:not([data-mode='prod'])) {
-      --badge-space: 32px;
-    }
-    .mode-badge {
-      top: calc(var(--header-h) + 8px);
-      bottom: auto;
-    }
   }
 </style>

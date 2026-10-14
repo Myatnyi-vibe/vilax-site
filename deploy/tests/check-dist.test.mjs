@@ -23,9 +23,9 @@ const LEGAL_WORDS = {
 /** Поддельная сборка: все обязательные файлы, страницы с формой, CSP как у deploy/csp.mjs. */
 function fixture({ mode, base = '', site = 'https://vilax.ai', lead = '' }, patch = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'check-dist-'));
-  // Страницы, которым noindex положен и в проде (экран выбора, 404, синонимы en) — «noindex, follow» в обоих режимах
-  // (SITE-17); остальные — index в проде, noindex в превью.
-  const noindexAlways = new Set(['index.html', '404.html', 'en/privacy.html', 'en/terms.html', 'en/support.html']);
+  // Страницы, которым noindex положен и в проде (404, синонимы en, старые адреса версий → «/») — «noindex, follow»
+  // в обоих режимах; остальные — index в проде, noindex в превью.
+  const noindexAlways = new Set(['404.html', 'en/privacy.html', 'en/terms.html', 'en/support.html', 'ru/index.html', 'en/index.html', 'ru/en/index.html', 'en/ru/index.html']);
   const robotsFor = (path) => noindexAlways.has(path) ? 'noindex, follow' : mode === 'prod' ? 'index, follow' : 'noindex, nofollow';
   const html = (path, body = '') =>
     withCsp(
@@ -33,7 +33,7 @@ function fixture({ mode, base = '', site = 'https://vilax.ai', lead = '' }, patc
         `<link rel="canonical" href="${site}${base}/${path.replace(/index\.html$/, '').replace(/\.html$/, '')}">` +
         `<link rel="icon" href="${base}/favicon.svg"><script>go()</script></head><body>` +
         `<a href="${base}/ru/">ru</a><a href="${base}/privacy">p</a><img src="${base}/og/ru.png" alt="">` +
-        `<dialog class="lead" data-lead data-mode="${mode}" ${lead ? `data-url="${lead}"` : 'data-url'}></dialog>${body}</body></html>`,
+        `<form class="ld__form" data-lead-form data-mode="${mode}" ${lead ? `data-url="${lead}"` : 'data-url'}></form>${body}</body></html>`,
       { leadUrl: lead, upgrade: mode === 'prod' },
     );
   const files = {
@@ -43,7 +43,7 @@ function fixture({ mode, base = '', site = 'https://vilax.ai', lead = '' }, patc
     'google1e0ecdafaa681c29.html': 'google-site-verification: google1e0ecdafaa681c29.html',
     '_astro/app.css': `body{font:url(${base}/fonts/a.woff2)}`, 'fonts/a.woff2': 'x', '_astro/app.js': 'export const x = 1;',
   };
-  for (const p of ['index.html', 'ru/index.html', 'en/index.html', '404.html', 'privacy.html', 'terms.html', 'support.html',
+  for (const p of ['index.html', 'ru/index.html', 'en/index.html', 'ru/en/index.html', 'en/ru/index.html', '404.html', 'privacy.html', 'terms.html', 'support.html',
     'ru/privacy.html', 'ru/terms.html', 'ru/support.html', 'en/privacy.html', 'en/terms.html', 'en/support.html',
     'ru/consent.html', 'en/consent.html']) files[p] = html(p, LEGAL_WORDS[p] ?? '');
   const clean = { ...files };
@@ -84,7 +84,7 @@ test('превью: адрес от корня мимо подпути и нес
 test('превью: путь от корня в скрипте и открытая для поиска страница', () => {
   run(PREVIEW, {
     '_astro/app.js': 'location.href = "/ru/";',
-    'en/index.html': (s) => s.replace('noindex, nofollow', 'index, follow'),
+    'privacy.html': (s) => s.replace('noindex, nofollow', 'index, follow'),
   }, (r) => {
     assert.ok(has(r, /путь от корня в скрипте/));
     assert.ok(has(r, /превью должно быть закрыто/));
@@ -106,11 +106,11 @@ test('прод: форма шлёт не туда, локальный адрес
 test('прод: встроенный скрипт без хэша, нет CSP, закрыт от поиска', () => {
   run({ ...PROD, lead: LEAD }, {
     'ru/index.html': (s) => s.replace('</body>', '<script>evil()</script></body>'),
-    'en/index.html': (s) => s.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, '').replace('index, follow', 'noindex, nofollow'),
+    'privacy.html': (s) => s.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, '').replace('index, follow', 'noindex, nofollow'),
   }, (r) => {
     assert.ok(has(r, /ru\/index\.html: встроенный скрипт без хэша/));
-    assert.ok(has(r, /en\/index\.html: нет CSP/));
-    assert.ok(has(r, /en\/index\.html: прод закрыт от поисковиков/));
+    assert.ok(has(r, /privacy\.html: нет CSP/));
+    assert.ok(has(r, /privacy\.html: прод закрыт от поисковиков/));
   });
 });
 

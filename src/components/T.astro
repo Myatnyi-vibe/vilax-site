@@ -1,0 +1,18 @@
+---
+// Текст, зависящий от сочетания «валюта × язык»: столько <span class="v">, сколько реально разных значений;
+// видимый выбирает CSS по <html lang data-currency> (src/styles/site.css). Одинаковое везде — просто текст.
+import { variants, type Pick } from '../lib/content';
+
+interface Props {
+  get: Pick;
+}
+const vs = variants(Astro.props.get);
+---
+
+{
+  vs.kind === 'one'
+    ? vs.value
+    : vs.kind === 'lang'
+      ? vs.items.map((x) => <span class="v" data-lang={x.lang}>{x.value}</span>)
+      : vs.items.map((x) => <span class="v" data-cur={x.cur} data-lang={x.lang}>{x.value}</span>)
+}

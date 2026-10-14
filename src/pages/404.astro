@@ -1,83 +1,65 @@
 ---
-// Настоящая 404: отдаётся на любой несуществующий адрес (nginx error_page 404 /404.html).
+// Настоящая 404 (nginx error_page 404 /404.html). Вид — прототип «404»: «404» моноширинным, заголовок, текст, кнопка.
 import Base from '../layouts/Base.astro';
-import Logo from '../components/brand/Logo.astro';
-import ModeBadge from '../components/site/ModeBadge.astro';
+import T from '../components/T.astro';
 import { ui } from '../i18n';
-import { CHOOSE_HREF, homePath, url } from '../lib/site';
-import { typo } from '../lib/typo';
-
-const ru = ui('ru');
-const en = ui('en');
+import { tone, url } from '../lib/site';
 ---
 
-<Base lang="x" title="404 · VILAX" description={en.notFound.text} path={url('/404')} noindex>
-  <main id="main" class="nf">
-    <a class="nf__logo" href={CHOOSE_HREF} aria-label={`VILAX: ${en.chooser.title}`}><Logo id="nf" /></a>
-    <div class="nf__body">
-      <p class="nf__code num" aria-hidden="true">404</p>
-      <div class="nf__cols">
-        <div lang="ru">
-          <h1>{typo('ru', ru.notFound.title)}</h1>
-          <p>{typo('ru', ru.notFound.text)}</p>
-          <a class="btn btn--primary" href={homePath('ru')}>{ru.notFound.back}</a>
-        </div>
-        <div lang="en">
-          <h2>{en.notFound.title}</h2>
-          <p>{en.notFound.text}</p>
-          <a class="btn btn--secondary" href={homePath('en')}>{en.notFound.back}</a>
-        </div>
-      </div>
+<Base page="404" path={url('/404')} titles={{ ru: `404 · ${ui('ru').notFound.title}`, en: `404 · ${ui('en').notFound.title}` }} noindex>
+  <section class="nf" {...tone('hero')} data-screen-label="404">
+    <div class="wrap nf__in">
+      <span class="nf__code" aria-hidden="true">404</span>
+      <h1 class="nf__h1"><T get={(_, u) => u.notFound.title} /></h1>
+      <p class="nf__p"><T get={(_, u) => u.notFound.text} /></p>
+      <a href={url('/')} class="nf__btn"><T get={(_, u) => u.notFound.back} /></a>
     </div>
-  </main>
-  <ModeBadge lang="ru" />
+  </section>
 </Base>
 
 <style>
   .nf {
-    min-height: 100dvh;
-    display: grid;
-    grid-template-rows: auto 1fr;
-    padding: 28px var(--gutter) var(--sp-8);
+    min-height: 86vh;
+    display: flex;
+    align-items: center;
+    padding: 140px 0 120px;
   }
-  .nf__logo {
-    justify-self: start;
-    display: inline-flex;
-    color: var(--ink);
-    border-radius: var(--r-xs);
-  }
-  .nf__body {
-    align-self: center;
+  .nf__in {
     width: 100%;
-    max-width: var(--container);
-    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
   }
   .nf__code {
-    font-size: clamp(6rem, 22vw, 16rem);
-    line-height: 0.9;
+    font-family: 'JetBrains Mono', monospace;
     font-weight: 200;
-    letter-spacing: -0.06em;
-    color: var(--accent);
+    font-size: clamp(96px, 16vw, 220px);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    color: var(--subtle);
   }
-  .nf__cols {
-    margin-top: var(--sp-7);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--sp-7);
+  .nf__h1 {
+    font-size: clamp(36px, 4.4vw, 64px);
+    font-weight: 620;
+    line-height: 1.06;
+    letter-spacing: -0.03em;
   }
-  .nf h1,
-  .nf h2 {
-    font-size: var(--fs-headline);
+  .nf__p {
+    font-size: 18px;
+    color: var(--muted);
+  }
+  .nf__btn {
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 22px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--onAccent);
     font-weight: 600;
-    letter-spacing: -0.015em;
-  }
-  .nf__cols p {
-    margin-block: var(--sp-3) var(--sp-5);
-    color: var(--ink-muted);
-  }
-  @media (max-width: 767px) {
-    .nf__cols {
-      grid-template-columns: 1fr;
-    }
+    font-size: 15px;
+    text-decoration: none;
+    margin-top: 8px;
   }
 </style>

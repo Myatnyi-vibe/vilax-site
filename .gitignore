@@ -11,3 +11,4 @@ dist/
 Thumbs.db
 prototypes/
 .impeccable/hook.cache.json
+src/data/media.json

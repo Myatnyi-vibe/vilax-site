@@ -73,3 +73,24 @@ test('правовые тексты en без кириллицы (кроме с�
     .filter((f) => CYR.test(readFileSync(join(enContent, f), 'utf8').replace(/<!--[\s\S]*?-->/g, '')));
   assert.deepEqual(bad, []);
 });
+
+// Четыре набора текстов сайта (валюта × язык): одинаковые ключи и состав; английские — без кириллицы.
+const SITE = ['rub-ru', 'rub-en', 'aed-en', 'aed-ru'].map((k) => [k, JSON.parse(readFileSync(join(ROOT, `src/content/site/${k}.json`), 'utf8'))] as const);
+
+test('src/content/site: у четырёх сочетаний одинаковые ключи', () => {
+  const base = new Set(keyPaths(SITE[0][1]));
+  for (const [k, d] of SITE.slice(1)) {
+    const b = new Set(keyPaths(d));
+    assert.deepEqual({ k, only: [...base].filter((x) => !b.has(x)), extra: [...b].filter((x) => !base.has(x)) }, { k, only: [], extra: [] });
+  }
+});
+
+test('src/content/site: в rub-en и aed-en нет кириллицы', () => {
+  for (const [k, d] of SITE.filter(([k]) => k.endsWith('-en'))) assert.deepEqual({ k, bad: strings(d).filter((s) => CYR.test(s)) }, { k, bad: [] });
+});
+
+test('src/content/site: у всех сочетаний одни и те же блоки, шаги, иконки и пункты заявки', () => {
+  type D = { blocks: { key: string }[]; onboarding: { steps: unknown[] }; fusion: { items: unknown[] }; lead: { points: unknown[] } };
+  const shape = (d: D) => [d.blocks.map((b) => b.key).join(','), d.onboarding.steps.length, d.fusion.items.length, d.lead.points.length].join('|');
+  for (const [k, d] of SITE) assert.equal(shape(d), shape(SITE[0][1]), k);
+});

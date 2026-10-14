@@ -1,767 +1,265 @@
 ---
-// Секция 4 «Блоки по одному» (SITE-1, SITE-13): пять блоков во вкладках — паттерн «вкладки функций», как у Linear.
-// У блока — задача, список функций и настоящий снимок демо; выбор функции показывает её собственный экран, если он снят.
-// Тексты — словари B (blocks.json; метка раннего доступа — platform.json). Снимки функций — src/data/verification.json →
-// screens[screen][lang].shot, только с результатом ok и только этой версии. Без скриптов вкладок нет: все блоки подряд,
-// у каждого свой h3; скрипт включает вкладки (APG tabs) и подмену снимка.
-import ruBlocks from '../../content/ru/blocks.json';
-import enBlocks from '../../content/en/blocks.json';
-import ruPlatform from '../../content/ru/platform.json';
-import enPlatform from '../../content/en/platform.json';
-import verification from '../../data/verification.json';
-import { ui } from '../../i18n';
-import type { Lang } from '../../i18n';
-import { typo } from '../../lib/typo';
-import { fill } from '../../lib/pricing-text';
-import { url } from '../../lib/site';
-import SectionHead from './SectionHead.astro';
-import Screen from './Screen.astro';
+// Блоки платформы (прототип «Blocks»): вкладки ARIA tabs (← → Home End), панель: слева H3, задача и функции
+// (по умолчанию заголовки, наведение раскрывает описание и меняет снимок), справа sticky-рамка со снимком 2:1.
+// Снимки — строго своего сочетания валюта × язык × тема (медиа-слой SITE-25): функции без снимка в сочетании —
+// не кнопки (Р-22), чужим вариантом не подменяем. Какой элемент виден — решает src/scripts/blocks.ts.
+import T from '../T.astro';
+import { siteOf, va } from '../../lib/content';
+import { tone, VARIANTS, CURS, type Cur } from '../../lib/site';
 
-interface Props {
-  lang: Lang;
-}
-
-interface Feature {
-  screen: string;
-  verified?: string;
-  title: string;
-  text?: string;
-  /** «Скоро»: ГГГГ-ММ, только статус dev со сроком (Р-4). */
-  soon?: string;
-  pending?: boolean;
-  /** Функция в системе помечена «Ранний доступ» (P&L, ДДС) — та же метка, что у блока. */
-  earlyAccess?: boolean;
-}
-interface Block {
-  key: string;
-  name: string;
-  task: string;
-  earlyAccess?: boolean;
-  pending?: boolean;
-  shot?: { src?: string; alt?: string };
-  features?: Feature[];
-  soon?: Feature[];
-}
-interface BlocksCopy {
-  title: string;
-  items: Block[];
-}
-interface Check {
-  result?: string;
-  shot?: string | null;
-}
-
-const { lang } = Astro.props;
-const t = (lang === 'ru' ? ruBlocks : enBlocks) as BlocksCopy;
-const earlyAccess = (lang === 'ru' ? ruPlatform : enPlatform).earlyAccess;
-const home = ui(lang).home;
-const tx = (s: string) => typo(lang, s);
-
-// Снимки 1600×1000, кроме «Центра управления» РФ — он снят короче, 1600×800.
-const SHOT_H: Record<string, number> = { '/shots/ru/t001.webp': 800 };
-const shotH = (src: string) => SHOT_H[src] ?? 1000;
-
-// Снимок функции — только успешная проверка этой версии; полоса AI-вердикта (…-verdict, 1600×278) сюда не подходит.
-const checks = (verification as unknown as { screens: Record<string, Partial<Record<Lang, Check>>> }).screens;
-const shotOf = (screen: string): string | null => {
-  const c = checks[screen]?.[lang];
-  return c?.result === 'ok' && c.shot && !c.shot.includes('-verdict') ? c.shot : null;
-};
-
-// «Скоро» — месяц словами: «декабрь 2026», «December 2026».
-const MONTH = /^\d{4}-\d{2}$/;
-const monthFmt = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-const monthOf = (ym: string) => {
-  const [y, m] = ym.split('-').map(Number);
-  return monthFmt
-    .formatToParts(new Date(Date.UTC(y, m - 1, 1)))
-    .filter((x) => x.type === 'month' || x.type === 'year')
-    .map((x) => x.value)
-    .join(' ');
-};
-
-// pending-пункты не выводятся (ТЗ: только то, что есть)
-const blocks = t.items
-  .filter((b) => !b.pending)
-  .map((b) => {
-    const src = b.shot?.src || '';
-    const alt = b.shot?.alt || '';
-    const feats = (b.features ?? [])
-      .filter((f) => !f.pending && !f.soon)
-      .map((f) => {
-        // переключатель — только если у блока есть рамка и у функции свой снимок
-        const shot = src ? shotOf(f.screen) : null;
-        return { ...f, shot, alt: shot === src ? alt : fill(home.shotAlt, { title: f.title }) };
-      });
-    // функция, чей экран стоит в рамке с самого начала
-    const lead = src ? feats.find((f) => f.shot === src) : undefined;
-    const soon = [...(b.soon ?? []), ...(b.features ?? []).filter((f) => f.soon)].filter(
-      (f) => f && f.title && !f.pending && MONTH.test(f.soon ?? ''),
-    );
-    return { key: b.key, name: b.name, task: b.task, early: !!b.earlyAccess, src, alt, feats, lead, soon };
-  });
+const keys = siteOf(VARIANTS[0]).blocks.map((b) => b.key);
+const block = (s: ReturnType<typeof siteOf>, k: string) => s.blocks.find((b) => b.key === k)!;
 ---
 
-{
-  blocks.length > 0 && (
-    <section class="sec blocks" id="blocks" aria-labelledby="blocks-title" data-blocks>
-      <div class="container">
-        <SectionHead lang={lang} id="blocks-title" title={t.title} />
-
-        <div class="blk-tabs" role="tablist" aria-label={home.blocksTabs} hidden data-blk-tablist data-reveal>
-          {blocks.map((b, i) => (
-            <button
-              type="button"
-              class="blk-tab"
-              role="tab"
-              id={`blocks-tab-${b.key}`}
-              aria-controls={`blocks-${b.key}`}
-              aria-selected={i === 0 ? 'true' : 'false'}
-              tabindex={i === 0 ? 0 : -1}
-              data-blk-tab={b.key}
-            >
-              <span>{tx(b.name)}</span>
-              {b.early && <span class="blk-flag">{tx(earlyAccess)}</span>}
-            </button>
-          ))}
-        </div>
-
-        <div class="blk-panels" data-reveal style="--reveal-delay: 80ms">
-          {blocks.map((b) => (
-            <div class:list={['blk', { 'blk--noshot': !b.src }]} id={`blocks-${b.key}`} data-blk-panel={b.key}>
-              <div class="blk__intro">
-                <div class:list={['blk__head', { 'blk__head--flag': b.early }]}>
-                  <h3 class="blk__name">{tx(b.name)}</h3>
-                  {b.early && <span class="blk-flag">{tx(earlyAccess)}</span>}
-                </div>
-                <p class="blk__task">{tx(b.task)}</p>
-              </div>
-
-              {b.src && (
-                <div class="blk__media" data-blk-media>
-                  <Screen
-                    lang={lang}
-                    src={b.src}
-                    alt={b.alt}
-                    screen={b.lead?.screen}
-                    verified={b.lead?.verified}
-                    width={1600}
-                    height={shotH(b.src)}
-                    loading="lazy"
-                    imgId={`blocks-${b.key}-img`}
-                  />
-                </div>
-              )}
-
-              {b.feats.length > 0 && (
-                <ul class="blk__feats" role="list">
-                  {b.feats.map((f) => (
-                    <li>
-                      {f.shot ? (
-                        <div
-                          class="blk__feat"
-                          data-pressed={f === b.lead ? 'true' : 'false'}
-                          data-controls={`blocks-${b.key}-img`}
-                          data-shot={url(f.shot)}
-                          data-alt={f.alt}
-                          data-h={shotH(f.shot)}
-                          data-screen={f.screen}
-                        >
-                          <span class="blk__feat-title">
-                            {tx(f.title)}
-                            {f.earlyAccess && <span class="blk-flag blk-flag--feat">{tx(earlyAccess)}</span>}
+<section id="blocks" class="bl sheet pad" {...tone('blocks')} data-screen-label="Blocks">
+  <div class="wrap bl__out">
+    <h2 data-reveal class="h2"><T get={(_, u) => u.blocksTabs} /></h2>
+    <div role="tablist" class="bl__tabs" {...va('aria-label', (_, u) => u.blocksTabs)} data-tablist>
+      {
+        keys.map((k, i) => (
+          <button type="button" role="tab" id={`tab-${k}`} class="bl__tab" aria-selected={i === 0 ? 'true' : 'false'} aria-controls={`panel-${k}`} tabindex={i === 0 ? 0 : -1} data-tab={k}>
+            <T get={(s) => block(s, k).name} />
+          </button>
+        ))
+      }
+    </div>
+    {
+      keys.map((k, i) => (
+        <div id={`panel-${k}`} role="tabpanel" aria-labelledby={`tab-${k}`} class="bl__panel" data-panel={k} hidden={i !== 0}>
+          <div class="bl__left">
+            <div class="bl__head">
+              <h3 class="bl__h3">
+                <T get={(s) => block(s, k).name} />
+              </h3>
+              <p class="bl__task">
+                <T get={(s) => block(s, k).task} />
+              </p>
+            </div>
+            {VARIANTS.map((v) => (
+              <div class="v" data-cur={v.cur} data-lang={v.lang}>
+                <ul class="bl__feats">
+                  {block(siteOf(v), k).features.map((f, fi) => (
+                    <li class="bl__li" data-fi={fi} data-screen={f.screen}>
+                      <button type="button" class="bl__f bl__f--btn" aria-pressed="false" aria-expanded="false">
+                        <span class="bl__tw"><span class="bl__ft">{f.title}</span></span>
+                        <span class="bl__rows">
+                          <span class="bl__clip">
+                            <span class="bl__fx">{f.text}</span>
                           </span>
-                          {f.text && <span class="blk__feat-text">{tx(f.text)}</span>}
+                        </span>
+                      </button>
+                      <div class="bl__f bl__f--div">
+                        <span class="bl__tw"><span class="bl__ft">{f.title}</span></span>
+                        <div class="bl__rows">
+                          <div class="bl__clip">
+                            <p class="bl__fx">{f.text}</p>
+                          </div>
                         </div>
-                      ) : (
-                        <div class="blk__feat">
-                          <span class="blk__feat-title">
-                            {tx(f.title)}
-                            {f.earlyAccess && <span class="blk-flag blk-flag--feat">{tx(earlyAccess)}</span>}
-                          </span>
-                          {f.text && <span class="blk__feat-text">{tx(f.text)}</span>}
-                        </div>
-                      )}
+                      </div>
                     </li>
                   ))}
                 </ul>
-              )}
-
-              {b.soon.length > 0 && (
-                <div class="blk__soon">
-                  <h4 class="blk__soon-title">{home.soon}</h4>
-                  <ul class="blk__feats" role="list">
-                    {b.soon.map((f) => (
-                      <li>
-                        <div class="blk__feat">
-                          <span class="blk__feat-title">{tx(f.title)}</span>
-                          {f.text && <span class="blk__feat-text">{tx(f.text)}</span>}
-                          <span class="blk__when">{monthOf(f.soon as string)}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ))}
+              </div>
+            ))}
+          </div>
+          <figure class="bl__fig" hidden>
+            <img class="bl__img" alt="" width="1600" height="800" loading="lazy" decoding="async" data-shot-img />
+            <span class="media-ph" data-shot-ph hidden></span>
+          </figure>
         </div>
-      </div>
-    </section>
-  )
-}
-
-<script>
-  // Вкладки блоков по APG (стрелки, Home/End, «бегающий» tabindex, выбор при фокусе) и подмена снимка по функции.
-  // Без скрипта вкладок нет — все блоки видны подряд; здесь лента показывается, а неактивные панели прячутся.
-  const root = document.querySelector<HTMLElement>('[data-blocks]');
-  if (root) initBlocks(root);
-
-  function initBlocks(root: HTMLElement) {
-    const tablist = root.querySelector<HTMLElement>('[data-blk-tablist]');
-    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-blk-tab]')];
-    const found = tabs.map((t) => document.getElementById(t.getAttribute('aria-controls') ?? ''));
-    if (!tablist || !tabs.length || found.some((p) => !p)) return;
-    const panels = found as HTMLElement[];
-    const keys = tabs.map((t) => t.dataset.blkTab ?? '');
-    const title = document.getElementById('blocks-title') ?? root;
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-    const hoverable = matchMedia('(hover: hover) and (pointer: fine)');
-    const stacked = matchMedia('(max-width: 1023px)');
-    let current = -1;
-
-    // функции со снимком становятся переключателями только здесь: без скрипта это обычный текст, а не кнопки,
-    // которые ничего не делают
-    root.querySelectorAll<HTMLElement>('div.blk__feat[data-shot]').forEach((d) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = d.className;
-      Object.assign(b.dataset, d.dataset);
-      b.setAttribute('aria-pressed', d.dataset.pressed === 'true' ? 'true' : 'false');
-      if (d.dataset.controls) b.setAttribute('aria-controls', d.dataset.controls);
-      b.append(...d.childNodes);
-      d.replaceWith(b);
-    });
-
-    panels.forEach((p, i) => {
-      p.setAttribute('role', 'tabpanel');
-      p.setAttribute('aria-labelledby', tabs[i].id);
-      p.tabIndex = 0;
-    });
-    tablist.hidden = false;
-    root.dataset.tabs = '';
-
-    // лента не влезает — край, за которым есть ещё вкладки, затухает (полосы прокрутки у ленты нет)
-    const edges = () => {
-      const max = tablist.scrollWidth - tablist.clientWidth;
-      tablist.toggleAttribute('data-more-start', tablist.scrollLeft > 2);
-      tablist.toggleAttribute('data-more-end', tablist.scrollLeft < max - 2);
-    };
-    tablist.addEventListener('scroll', edges, { passive: true });
-    new ResizeObserver(edges).observe(tablist);
-
-    /** Держит вкладку в видимой части ленты (телефон, планшет), прокрутку страницы не трогает. */
-    const keepInStrip = (tab: HTMLElement) => {
-      const max = tablist.scrollWidth - tablist.clientWidth;
-      if (max <= 0) return;
-      const pad = parseFloat(getComputedStyle(tablist).paddingLeft) || 0;
-      const from = tablist.scrollLeft;
-      let to = from;
-      if (tab.offsetLeft - pad < from) to = tab.offsetLeft - pad;
-      else if (tab.offsetLeft + tab.offsetWidth + pad > from + tablist.clientWidth)
-        to = tab.offsetLeft + tab.offsetWidth + pad - tablist.clientWidth;
-      if (to !== from) tablist.scrollTo({ left: Math.max(0, Math.min(max, to)), behavior: reduce.matches ? 'auto' : 'smooth' });
-    };
-
-    const select = (i: number, focus = false) => {
-      if (i !== current) {
-        current = i;
-        tabs.forEach((t, j) => {
-          const on = j === i;
-          t.setAttribute('aria-selected', String(on));
-          t.tabIndex = on ? 0 : -1;
-          panels[j].hidden = !on;
-        });
-      }
-      if (focus) tabs[i].focus();
-      keepInStrip(tabs[i]);
-    };
-
-    tabs.forEach((t, i) => t.addEventListener('click', () => select(i)));
-    tablist.addEventListener('keydown', (e) => {
-      const i = tabs.indexOf(e.target as HTMLButtonElement);
-      if (i < 0) return;
-      const n = tabs.length;
-      const next =
-        e.key === 'ArrowRight' ? (i + 1) % n : e.key === 'ArrowLeft' ? (i - 1 + n) % n : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : -1;
-      if (next < 0) return;
-      e.preventDefault();
-      select(next, true);
-    });
-
-    // #blocks-<key>: открыть вкладку и подвести к заголовку секции (scroll-padding шапки учитывается браузером)
-    const indexOf = (hash: string) => {
-      const m = /^#blocks-([\w-]+)$/.exec(hash);
-      return m ? keys.indexOf(m[1]) : -1;
-    };
-    const open = (i: number, behavior?: ScrollBehavior) => {
-      select(i);
-      title.scrollIntoView({ block: 'start', behavior });
-    };
-
-    const initial = indexOf(location.hash);
-    select(initial >= 0 ? initial : 0);
-    if (initial >= 0) requestAnimationFrame(() => open(initial, 'instant'));
-
-    window.addEventListener('hashchange', () => {
-      const i = indexOf(location.hash);
-      if (i >= 0) open(i);
-    });
-    // ссылки на вкладку (секция 3 и др.): повторный клик по тому же адресу hashchange не даёт — обрабатываем сами
-    document.addEventListener('click', (e) => {
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      const a = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a[href*="#blocks-"]') : null;
-      if (!a || a.target === '_blank') return;
-      const url = new URL(a.href, location.href);
-      if (url.origin !== location.origin || url.pathname !== location.pathname) return;
-      const i = indexOf(url.hash);
-      if (i < 0) return;
-      e.preventDefault();
-      if (location.hash !== url.hash) history.pushState(null, '', url.hash);
-      // фокус на вкладку — следующий Tab с клавиатуры продолжит с секции, как при обычном переходе по якорю
-      tabs[i].focus({ preventScroll: true });
-      open(i);
-    });
-
-    // Подмена снимка по функции: предзагрузка по наведению, мягкая смена через слой поверх снимка.
-    const cache = new Map<string, HTMLImageElement>();
-    const preload = (src: string) => {
-      let im = cache.get(src);
-      if (!im) {
-        im = new Image();
-        im.decoding = 'async';
-        im.src = src;
-        cache.set(src, im);
-      }
-      return im;
-    };
-    const headerH = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 0;
-
-    panels.forEach((panel) => {
-      const img = panel.querySelector<HTMLImageElement>('img');
-      const media = panel.querySelector<HTMLElement>('[data-blk-media]');
-      const buttons = [...panel.querySelectorAll<HTMLButtonElement>('button[data-shot]')];
-      if (!img || !media || !buttons.length) return;
-      const ref = panel.querySelector<HTMLElement>('[data-ref-screen]');
-      let layer: HTMLImageElement | null = null;
-      let seq = 0;
-      let timer = 0;
-
-      const commit = (src: string, alt: string, h: number) => {
-        img.src = src;
-        img.alt = alt;
-        img.setAttribute('height', String(h));
-      };
-
-      const show = async (src: string, alt: string, h: number) => {
-        const my = ++seq;
-        try {
-          await preload(src).decode();
-        } catch {
-          /* не раскодировался заранее — подменим как есть */
-        }
-        if (my !== seq) return;
-        layer?.remove();
-        layer = null;
-        // «меньше движения», снимок другой высоты (рамка всё равно изменится) или рамка не видна — простая подмена
-        if (reduce.matches || img.getAttribute('height') !== String(h) || !img.offsetWidth) {
-          commit(src, alt, h);
-          return;
-        }
-        const box = media.getBoundingClientRect();
-        const r = img.getBoundingClientRect();
-        const over = document.createElement('img');
-        over.src = src;
-        over.alt = '';
-        over.setAttribute('aria-hidden', 'true');
-        over.style.cssText =
-          `position:absolute;left:${r.left - box.left}px;top:${r.top - box.top}px;width:${r.width}px;height:${r.height}px;` +
-          `border-radius:${getComputedStyle(img).borderRadius};opacity:0;pointer-events:none;` +
-          'transition:opacity 160ms cubic-bezier(0.23, 1, 0.32, 1)';
-        media.append(over);
-        layer = over;
-        void over.offsetWidth; // зафиксировать opacity 0 до перехода
-        over.style.opacity = '1';
-        await new Promise((done) => setTimeout(done, 170));
-        if (layer !== over) return;
-        commit(src, alt, h);
-        try {
-          await img.decode();
-        } catch {
-          /* слой уберём всё равно */
-        }
-        if (layer === over) {
-          over.remove();
-          layer = null;
-        }
-      };
-
-      const choose = (b: HTMLButtonElement) => {
-        if (b.getAttribute('aria-pressed') === 'true' || !b.dataset.shot) return;
-        buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-        if (ref) ref.textContent = b.dataset.screen ?? '';
-        void show(b.dataset.shot, b.dataset.alt ?? '', Number(b.dataset.h) || 1000);
-      };
-
-      buttons.forEach((b) => {
-        b.addEventListener('pointerenter', (e) => {
-          if (b.dataset.shot) preload(b.dataset.shot);
-          if (e.pointerType !== 'mouse' || !hoverable.matches) return;
-          clearTimeout(timer);
-          // курсор задержался на пункте, а не пролетел по пути к снимку
-          timer = window.setTimeout(() => choose(b), 90);
-        });
-        b.addEventListener('pointerleave', () => clearTimeout(timer));
-        b.addEventListener('focus', () => choose(b));
-        b.addEventListener('click', () => {
-          choose(b);
-          // телефон и планшет: снимок над списком — если он целиком ушёл за край экрана, подводим к нему
-          if (!stacked.matches) return;
-          const r = media.getBoundingClientRect();
-          if (r.bottom < headerH() || r.top > window.innerHeight) media.scrollIntoView({ block: 'nearest' });
-        });
-      });
-    });
-  }
-</script>
+      ))
+    }
+    <script type="application/json" data-block-shots set:html={JSON.stringify(
+      Object.fromEntries(CURS.map((c: Cur) => [c, Object.fromEntries(keys.map((k) => [k, block(siteOf({ cur: c, lang: 'ru' }), k).shot]))]))
+    )} />
+  </div>
+</section>
 
 <style>
-  /* Лента вкладок: тонкая линия снизу, активная — подчёркивание 2px акцентом. Не хватает ширины — лента листается
-     внутри себя (без полосы прокрутки), страница вбок не едет. */
-  .blk-tabs {
-    position: relative;
+  .bl__out {
     display: flex;
-    gap: var(--sp-3);
-    margin: var(--sp-7) calc(-1 * var(--sp-3)) 0;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .bl__tabs {
+    display: flex;
+    gap: 8px;
     overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
+    padding: 4px;
+    margin: -4px;
     scrollbar-width: none;
-    /* линия — фоном: стоит на месте при прокрутке ленты и не обрезается, как граница под подчёркиванием */
-    background: linear-gradient(var(--hairline), var(--hairline)) var(--sp-3) 100% / calc(100% - 2 * var(--sp-3)) 1px no-repeat;
   }
-  .blk-tabs::-webkit-scrollbar {
-    display: none;
-  }
-  .blk-tabs[data-more-end] {
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
-  }
-  .blk-tabs[data-more-start] {
-    -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
-    mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
-  }
-  .blk-tabs[data-more-start][data-more-end] {
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
-    mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
-  }
-  .blk-tabs[hidden] {
-    display: none;
-  }
-
-  /* у вкладки поля по 12 px: текст первой стоит по краю контейнера, нажимаемая зона ≥ 44 px */
-  .blk-tab {
-    position: relative;
+  .bl__tab {
     flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-2);
-    min-height: 48px;
-    padding: 0 var(--sp-3);
-    border: 0;
-    border-radius: var(--r-sm) var(--r-sm) 0 0;
-    background: none;
-    font-size: 0.9375rem;
-    font-weight: 550;
-    line-height: 1.2;
-    color: var(--ink-subtle);
-    white-space: nowrap;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 9999px;
     cursor: pointer;
-    scroll-snap-align: start;
-  }
-  .blk-tab::after {
-    content: '';
-    position: absolute;
-    left: var(--sp-3);
-    right: var(--sp-3);
-    bottom: 0;
-    height: 2px;
-    border-radius: 2px 2px 0 0;
-    background: var(--accent);
-    transform: scaleX(0);
-  }
-  .blk-tab[aria-selected='true'] {
-    color: var(--ink);
-  }
-  .blk-tab[aria-selected='true']::after {
-    transform: scaleX(1);
-  }
-  /* лента обрезает всё снаружи — кольцо фокуса внутрь */
-  .blk-tab:focus-visible {
-    outline-offset: -2px;
-  }
-  @media (hover: hover) {
-    .blk-tab:not([aria-selected='true']):hover {
-      color: var(--ink-muted);
-    }
-  }
-
-  /* метка раннего доступа: тихая, на вкладке ещё тише */
-  .blk-flag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px var(--sp-2);
-    border: 1px solid var(--hairline-strong);
-    border-radius: var(--r-pill);
-    font-size: var(--fs-caption);
-    line-height: 1.4;
-    font-weight: 500;
-    color: var(--ink-subtle);
+    font-size: 15px;
+    font-weight: 600;
     white-space: nowrap;
+    border: 1px solid var(--hairS);
+    background: transparent;
+    color: var(--ink);
+    transition:
+      background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1),
+      color 0.2s;
   }
-  /* у функции — в строку с названием, по базовой линии текста */
-  .blk-flag--feat {
-    margin-left: var(--sp-2);
-    vertical-align: 0.1em;
-    font-weight: 500;
+  .bl__tab[aria-selected='true'] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--bg);
   }
-  .blk-tab .blk-flag {
-    border-color: var(--hairline);
-    color: var(--ink-faint);
+  .bl__panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(24px, 3vw, 48px);
+    align-items: start;
+    padding: clamp(20px, 2.5vw, 32px);
+    border-radius: 20px;
+    background: var(--surf);
+    border: 1px solid var(--hair);
+    box-shadow: var(--shadow);
   }
-
-  .blk-panels {
-    margin-top: var(--sp-7);
-  }
-  .blk[hidden] {
+  .bl__panel[hidden] {
     display: none;
   }
-  .blk:focus-visible {
-    outline-offset: var(--sp-2);
-    border-radius: var(--r-md);
-  }
-  /* без скриптов блоки идут подряд через тонкую линию */
-  .blocks:not([data-tabs]) .blk + .blk {
-    margin-top: var(--sp-8);
-    padding-top: var(--sp-8);
-    border-top: 1px solid var(--hairline);
-  }
-
-  /* Вступление блока: h3 — название, ниже крупно задача */
-  .blk__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--sp-2) var(--sp-3);
-    margin-bottom: var(--sp-3);
-  }
-  .blk__name {
-    font-size: var(--fs-title);
-    line-height: 1.3;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--ink);
-  }
-  .blk__task {
-    max-width: 24ch;
-    font-size: var(--fs-headline);
-    line-height: 1.2;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    color: var(--ink);
-    text-wrap: balance;
-  }
-  /* со вкладками название уже на вкладке: h3 остаётся для дикторов и навигации по заголовкам */
-  .blocks[data-tabs] .blk__name {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-  .blocks[data-tabs] .blk__head:not(.blk__head--flag) {
-    margin-bottom: 0;
-  }
-
-  .blk__media {
-    position: relative;
-    min-width: 0;
-    margin-top: var(--sp-6);
-  }
-
-  /* Функции: тонкая направляющая слева; у выбранной — полоса акцентом поверх неё */
-  .blk__feats {
-    margin: var(--sp-6) 0 0;
-    padding: 0;
-    list-style: none;
-  }
-  .blk__feat {
-    position: relative;
-    display: block;
-    width: 100%;
-    padding: var(--sp-3) var(--sp-4);
-    border: 0;
-    border-radius: 0 var(--r-sm) var(--r-sm) 0;
-    background: none;
-    text-align: left;
-  }
-  .blk__feat::before,
-  button.blk__feat::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--hairline);
-  }
-  button.blk__feat {
-    min-height: 44px;
-  }
-  button.blk__feat::after {
-    background: var(--accent);
-    transform: scaleY(0);
-  }
-  button.blk__feat[aria-pressed='true']::after {
-    transform: scaleY(1);
-  }
-  button.blk__feat[aria-pressed='true'] .blk__feat-text {
-    color: var(--ink);
-  }
-  .blk__feat:focus-visible {
-    outline-offset: 0;
-  }
-  .blocks[data-tabs] button.blk__feat {
-    cursor: pointer;
-  }
-  @media (hover: hover) {
-    .blocks[data-tabs] button.blk__feat:hover::before {
-      background: var(--hairline-strong);
-    }
-  }
-  .blk__feat-title {
-    display: block;
-    font-size: var(--fs-body);
-    line-height: 1.4;
-    font-weight: 600;
-    color: var(--ink);
-  }
-  .blk__feat-text {
-    display: block;
-    max-width: 60ch;
-    margin-top: var(--sp-1);
-    font-size: var(--fs-small);
-    line-height: 1.5;
-    color: var(--ink-muted);
-    text-wrap: pretty;
-  }
-
-  .blk__soon {
-    margin-top: var(--sp-6);
-  }
-  .blk__soon-title {
-    margin: 0;
-    font-size: var(--fs-small);
-    line-height: 1.4;
-    font-weight: 600;
-    color: var(--ink-subtle);
-  }
-  .blk__soon .blk__feats {
-    margin-top: var(--sp-3);
-  }
-  .blk__when {
-    display: block;
-    margin-top: var(--sp-1);
-    font-size: var(--fs-caption);
-    line-height: 1.4;
-    color: var(--ink-subtle);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .blk-tab::after {
-      transition: transform 0.24s var(--ease-ui);
-    }
-    button.blk__feat::after {
-      transition: transform 0.2s var(--ease-ui);
-    }
-  }
-
-  /* Телефон и планшет: лента вкладок от края до края экрана, текст первой вкладки — по краю контейнера */
-  @media (max-width: 1023px) {
-    .blk-tabs {
-      margin-inline: calc(-1 * var(--gutter));
-      padding-inline: calc(var(--gutter) - var(--sp-3));
-      scroll-padding-inline: calc(var(--gutter) - var(--sp-3));
-      background-position: 0 100%;
-      background-size: 100% 1px;
-    }
-  }
-
-  /* Планшет: функции в две колонки под снимком; блок без снимка — в две колонки на всю ширину и на компьютере */
   @media (min-width: 768px) {
-    .blk__feats {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: var(--sp-5);
+    .bl__panel.has-shot {
+      grid-template-columns: minmax(260px, 1fr) minmax(0, 3fr);
     }
   }
-
-  /* Компьютер: сетка 12 — слева 5 колонок (задача и функции), справа 7 (снимок, держится в экране при прокрутке) */
-  @media (min-width: 1024px) {
-    .blk {
-      display: grid;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      grid-template-rows: auto auto 1fr;
-      column-gap: var(--sp-5);
+  .bl__left {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+  }
+  .bl__head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .bl__h3 {
+    font-size: clamp(24px, 2.2vw, 30px);
+    font-weight: 620;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  .bl__task {
+    font-size: 17px;
+    color: var(--muted);
+  }
+  .bl__feats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 4px;
+  }
+  .has-shot .bl__feats {
+    grid-template-columns: 1fr;
+  }
+  @media (max-width: 767.98px) {
+    .bl__feats {
+      grid-template-columns: 1fr;
     }
-    .blk__intro,
-    .blk__feats,
-    .blk__soon {
-      grid-column: 1 / span 5;
-      padding-right: var(--sp-5);
-    }
-    .blk__intro {
-      grid-row: 1;
-    }
-    .blk > .blk__feats {
-      grid-row: 2;
-      display: block;
-    }
-    .blk__soon {
-      grid-row: 3;
-    }
-    .blk__soon .blk__feats {
-      display: block;
-      padding-right: 0;
-    }
-    .blk__media {
-      grid-column: 6 / -1;
-      grid-row: 1 / span 3;
-      align-self: start;
-      margin-top: 0;
-      position: sticky;
-      top: calc(var(--header-h) + var(--sp-6));
-    }
-    .blk--noshot .blk__intro,
-    .blk--noshot > .blk__feats,
-    .blk--noshot .blk__soon {
-      grid-column: 1 / -1;
-      padding-right: 0;
-    }
-    .blk--noshot > .blk__feats,
-    .blk--noshot .blk__soon .blk__feats {
-      display: grid;
-    }
+  }
+  .bl__li {
+    min-width: 0;
+  }
+  .bl__f {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px;
+    border: 1px solid transparent;
+  }
+  .bl__f--btn {
+    width: 100%;
+    text-align: left;
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .bl__f--btn[aria-pressed='true'] {
+    background: var(--surf2);
+    border-color: var(--hairS);
+  }
+  .bl__li:not(.is-shot) .bl__f--btn,
+  .bl__li.is-shot .bl__f--div {
+    display: none;
+  }
+  .bl__ft {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .bl__tw {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .bl__rows {
+    display: grid;
+    width: 100%;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .bl__f--div .bl__rows {
+    width: auto;
+  }
+  .is-open .bl__rows {
+    grid-template-rows: 1fr;
+  }
+  .bl__clip {
+    display: block;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .bl__fx {
+    display: block;
+    padding-top: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+      opacity 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+      transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .is-open .bl__fx {
+    opacity: 1;
+    transform: none;
+  }
+  .bl__fig {
+    margin: 0;
+    position: sticky;
+    top: 96px;
+    padding: 8px;
+    border-radius: 20px;
+    background: var(--surf2);
+    border: 1px solid var(--hair);
+  }
+  .bl__fig[hidden] {
+    display: none;
+  }
+  .bl__img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    aspect-ratio: 2/1;
+    object-fit: cover;
+    object-position: top;
+  }
+  .bl__img:not([src]) {
+    display: none;
+  }
+  .bl__fig .media-ph {
+    aspect-ratio: 2/1;
+    height: auto;
   }
 </style>

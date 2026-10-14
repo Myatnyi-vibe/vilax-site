@@ -244,9 +244,9 @@ test('словари: блоки РФ подписаны в ru и en, подст
     // Строки, которые рисует модель версии: blocks — группа blocks, условия, вводная и общие подписи оплаты; v16 — всё, кроме blocks.
     const model = prices[lang].model;
     const used = model === 'blocks' ? { blocks: dict.blocks, conditions: dict.conditions, lead: dict.lead, annualNote: dict.calc.annualNote, validFrom: dict.calc.validFrom } : { ...dict, blocks: undefined };
-    const faq = JSON.parse(read(`src/content/${lang}/faq.json`));
+    // FAQ калькулятора больше нет на странице (Р-24): проверяются только строки калькулятора
     const vars = { ...versionVars(lang), tier: '' };
-    const missing = [...JSON.stringify([used, faq]).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).filter((k) => !(k in vars));
+    const missing = [...JSON.stringify([used]).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).filter((k) => !(k in vars));
     assert.deepEqual([...new Set(missing)], [], `${lang}: подстановки без значения`);
   }
 });

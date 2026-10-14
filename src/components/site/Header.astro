@@ -1,267 +1,276 @@
 ---
-// Шапка версии: логотип, меню «Платформа · Цены · Подключение · Вопросы», «Сменить регион», «Запросить демо».
-// Над обложкой прозрачная, дальше — с фоном (IntersectionObserver на [data-hero], без слушателя scroll).
-// На телефоне меню в выезжающей панели (<dialog>), кнопка демо видна всегда.
-import Logo from '../brand/Logo.astro';
-import { ui, type Lang } from '../../i18n';
-import { NAV_SECTIONS, CHOOSE_HREF, homePath } from '../../lib/site';
+// Шапка и мобильное меню (SITE-21). Значения — прототип: шапка fixed 64/56 px, над обложкой прозрачная,
+// после прокрутки — фон .88 + blur(12px) + волосок. Справа: RU / EN, ₽ / AED (тот же компонент, Р-27), тема,
+// «Запросить демо», бургер < 1180 px. «Сменить регион» удалён (одна страница, ТЗ медиа).
+import T from '../T.astro';
+import { va } from '../../lib/content';
+import { tone, url, NAV_SECTIONS, LANGS, CURS } from '../../lib/site';
 
 interface Props {
-  lang: Lang;
-  /** Шапка лежит поверх обложки и прозрачна, пока обложка на экране. */
-  overHero?: boolean;
+  page: 'home' | 'legal' | '404';
 }
-
-const { lang, overHero = false } = Astro.props;
-const t = ui(lang);
-const home = homePath(lang);
+const { page } = Astro.props;
+const home = page === 'home';
+const anchor = (id: string) => (home ? `#${id}` : url(`/#${id}`));
+const CUR_LABEL = { rub: '₽', aed: 'AED' } as const;
 ---
 
-<header class="hdr" data-over={overHero ? 'true' : 'false'} data-solid={overHero ? 'false' : 'true'}>
-  <div class="hdr__inner container">
-    <a class="hdr__logo" href={home} aria-label={t.a11y.home}><Logo id="hdr" /></a>
-    <nav class="hdr__nav" aria-label={t.a11y.nav}>
-      {NAV_SECTIONS.map((s) => <a href={`${home}#${s}`}>{t.nav[s]}</a>)}
+<a class="skip" href="#top"><T get={(_, u) => u.skip} /></a>
+<header class:list={['hdr', { 'is-solid': !home }]} {...tone('base')} data-hdr>
+  <div class="hdr__in">
+    <a href={home ? '#top' : url('/')} class="hdr__home" data-go-home {...va('aria-label', (_, u) => u.home)}>
+      <img src={url('/logo.svg')} alt="" class="hdr__logo" />
+      <img src={url('/wordmark.svg')} alt="VILAX" class="hdr__word" />
+    </a>
+    <nav class="hdr__nav" {...va('aria-label', (_, u) => u.nav)}>
+      {NAV_SECTIONS.map((k) => <a href={anchor(k)} data-go={k}><T get={(_, u) => u.navItems[k]} /></a>)}
     </nav>
-    <div class="hdr__end">
-      <a class="hdr__switch" href={CHOOSE_HREF}>{t.chrome.switchVersion}</a>
-      <a class="btn btn--primary btn--sm" href="#demo" data-demo="header">{t.chrome.demo}</a>
-      <button class="hdr__burger" type="button" aria-label={t.a11y.menuOpen} aria-controls="site-menu" aria-expanded="false" data-menu-open>
-        <span aria-hidden="true"></span>
+    <div class="hdr__right">
+      <div class="hdr__chrome">
+        <div role="group" class="seg" {...va('aria-label', (_, u) => u.langLabel)}>
+          {LANGS.map((l) => <button type="button" class="seg__b" data-set-lang={l} lang={l} aria-pressed={l === 'ru' ? 'true' : 'false'}>{l.toUpperCase()}</button>)}
+        </div>
+        <div role="group" class="seg" {...va('aria-label', (_, u) => u.curLabel)}>
+          {CURS.map((c) => <button type="button" class="seg__b" data-set-cur={c} aria-pressed={c === 'rub' ? 'true' : 'false'} {...va('aria-label', (_, u) => u.cur[c])} {...va('title', (_, u) => u.cur[c])}>{CUR_LABEL[c]}</button>)}
+        </div>
+        <button type="button" class="hdr__theme" data-theme-toggle {...va('aria-label', (_, u) => u.themeToLight)} {...va('title', (_, u) => u.themeToLight)}>
+          <svg class="only-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+          <svg class="only-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+        </button>
+      </div>
+      <a href={anchor('pricing')} class="hdr__demo" data-go-cta><T get={(_, u) => u.demo} /></a>
+      <button type="button" class="hdr__burger" data-menu-toggle aria-expanded="false" aria-controls="mmenu" {...va('aria-label', (_, u) => u.menuOpen)}>
+        <span></span><span></span>
       </button>
     </div>
   </div>
 </header>
 
-<dialog id="site-menu" class="menu" aria-label={t.a11y.nav}>
-  <div class="menu__top">
-    <a class="hdr__logo" href={home} aria-label={t.a11y.home} data-menu-close><Logo id="menu" /></a>
-    <button class="menu__close" type="button" aria-label={t.a11y.menuClose} data-menu-close><span aria-hidden="true"></span></button>
+<div id="mmenu" class="mm" {...tone('base')} data-mmenu hidden>
+  {NAV_SECTIONS.map((k) => <a href={anchor(k)} class="mm__link" data-go={k}><T get={(_, u) => u.navItems[k]} /></a>)}
+  <div class="mm__row">
+    <div role="group" class="seg" {...va('aria-label', (_, u) => u.langLabel)}>
+      {LANGS.map((l) => <button type="button" class="seg__b seg__b--m" data-set-lang={l} lang={l} aria-pressed={l === 'ru' ? 'true' : 'false'}>{l.toUpperCase()}</button>)}
+    </div>
+    <div role="group" class="seg" {...va('aria-label', (_, u) => u.curLabel)}>
+      {CURS.map((c) => <button type="button" class="seg__b seg__b--m" data-set-cur={c} aria-pressed={c === 'rub' ? 'true' : 'false'} {...va('aria-label', (_, u) => u.cur[c])}>{CUR_LABEL[c]}</button>)}
+    </div>
+    <button type="button" class="mm__theme" data-theme-toggle><span class="only-dark"><T get={(_, u) => u.themeToLight} /></span><span class="only-light"><T get={(_, u) => u.themeToDark} /></span></button>
   </div>
-  <nav class="menu__nav" aria-label={t.a11y.nav}>
-    {NAV_SECTIONS.map((s) => <a href={`${home}#${s}`} data-menu-close>{t.nav[s]}</a>)}
-  </nav>
-  <div class="menu__end">
-    <a class="btn btn--primary" href="#demo" data-demo="menu" data-menu-close>{t.chrome.demo}</a>
-    <a class="menu__switch" href={CHOOSE_HREF}>{t.chrome.switchVersion}</a>
-  </div>
-</dialog>
-
-<script>
-  const header = document.querySelector<HTMLElement>('.hdr');
-  const hero = document.querySelector<HTMLElement>('[data-hero]');
-  if (header && hero && header.dataset.over === 'true') {
-    const h = header.offsetHeight;
-    new IntersectionObserver(
-      ([entry]) => {
-        header.dataset.solid = entry.isIntersecting ? 'false' : 'true';
-      },
-      { rootMargin: `-${h}px 0px 0px 0px`, threshold: 0 },
-    ).observe(hero);
-  }
-
-  const menu = document.getElementById('site-menu') as HTMLDialogElement | null;
-  const opener = document.querySelector<HTMLButtonElement>('[data-menu-open]');
-  if (menu && opener) {
-    opener.addEventListener('click', () => {
-      menu.showModal();
-      opener.setAttribute('aria-expanded', 'true');
-    });
-    menu.addEventListener('close', () => opener.setAttribute('aria-expanded', 'false'));
-    menu.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      if (target === menu || target.closest('[data-menu-close]')) menu.close();
-    });
-  }
-</script>
+</div>
 
 <style>
   .hdr {
     position: fixed;
-    inset: 0 0 auto;
-    z-index: var(--z-header);
-    height: var(--header-h);
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    height: 64px;
+    background-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
     transition:
-      background-color 0.3s var(--ease-ui),
-      border-color 0.3s var(--ease-ui);
-    border-bottom: 1px solid transparent;
+      background-color 0.24s cubic-bezier(0.23, 1, 0.32, 1),
+      box-shadow 0.24s cubic-bezier(0.23, 1, 0.32, 1);
   }
-  .hdr[data-solid='true'] {
-    background: rgb(var(--canvas-rgb) / 0.88);
-    border-bottom-color: var(--hairline);
-    -webkit-backdrop-filter: blur(12px) saturate(1.3);
-    backdrop-filter: blur(12px) saturate(1.3);
+  .hdr.is-solid {
+    background-color: rgb(2 8 23 / 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 -1px 0 var(--hair);
   }
-  .hdr__inner {
+  :global(html[data-theme='light']) .hdr.is-solid {
+    background-color: rgb(245 247 250 / 0.88);
+  }
+  .hdr__in {
+    max-width: 1360px;
     height: 100%;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 3vw, 40px);
     display: flex;
     align-items: center;
-    gap: 36px;
+    gap: 24px;
+  }
+  .hdr__home {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    flex: none;
   }
   .hdr__logo {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    text-decoration: none;
-    color: var(--ink);
-    border-radius: var(--r-xs);
+    width: 30px;
+    height: auto;
+  }
+  .hdr__word {
+    height: 13px;
+    width: auto;
   }
   .hdr__nav {
     display: flex;
     gap: 28px;
-    font-size: var(--fs-small);
+    margin-left: 24px;
   }
-  .hdr__nav a,
-  .hdr__switch {
-    color: var(--ink-muted);
+  .hdr__nav a {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--muted);
     text-decoration: none;
-    transition: color 0.2s var(--ease-ui);
   }
-  .hdr__nav a:hover,
-  .hdr__switch:hover {
-    color: var(--ink);
-  }
-  .hdr__end {
+  .hdr__right {
     margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 20px;
-    font-size: var(--fs-small);
+    gap: 12px;
   }
-  .hdr__switch {
-    color: var(--ink-subtle);
+  .hdr__chrome {
+    display: contents;
   }
-  .hdr__burger,
-  .menu__close {
-    display: none;
-    position: relative;
+  .seg {
+    display: flex;
+    padding: 3px;
+    border-radius: 9999px;
+    border: 1px solid var(--hairS);
+  }
+  .seg__b {
+    height: 30px;
+    min-width: 38px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: transparent;
+    color: var(--ink);
+    transition: background-color 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .seg__b--m {
+    height: 40px;
+    min-width: 52px;
+    padding: revert;
+    font-size: 14px;
+    letter-spacing: normal;
+    transition: none;
+  }
+  .seg__b[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .hdr__theme {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 9999px;
+    border: 1px solid var(--hairS);
+    background: transparent;
+    cursor: pointer;
+    color: var(--ink);
+    padding: revert;
+  }
+  .hdr__demo {
+    display: inline-flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--onAccent);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .hdr__burger {
     width: 44px;
     height: 44px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--hairline-strong);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--hairS);
+    border-radius: 8px;
     background: transparent;
     cursor: pointer;
   }
-  @media (hover: hover) {
-    .hdr__burger:hover,
-    .menu__close:hover {
-      border-color: var(--ink-subtle);
-      background: var(--surface-1);
-    }
-  }
-  .hdr__burger span,
-  .hdr__burger span::before,
-  .menu__close span,
-  .menu__close span::before {
-    position: absolute;
-    left: 13px;
-    right: 13px;
+  .hdr__burger span {
+    display: block;
+    width: 18px;
     height: 1.5px;
     background: var(--ink);
   }
-  .hdr__burger span {
-    top: 17px;
-  }
-  .hdr__burger span::before {
-    content: '';
-    left: 0;
-    right: 0;
-    top: 8px;
-  }
-  .menu__close {
-    display: block;
-  }
-  .menu__close span {
-    top: 21px;
-    transform: rotate(45deg);
-  }
-  .menu__close span::before {
-    content: '';
-    left: 0;
-    right: 0;
-    top: 0;
-    transform: rotate(-90deg);
-  }
-
-  .menu {
-    width: 100%;
-    max-width: none;
-    height: 100dvh;
-    max-height: none;
-    margin: 0;
-    padding: 0 var(--gutter) 32px;
-    border: 0;
-    background: var(--canvas);
-    color: var(--ink);
-    display: none;
-    flex-direction: column;
-  }
-  .menu[open] {
-    display: flex;
-  }
-  .menu::backdrop {
-    background: rgb(var(--canvas-rgb) / 0.6);
-  }
-  .menu__top {
-    height: var(--header-h);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .menu__nav {
-    display: flex;
-    flex-direction: column;
-    margin-top: 24px;
-  }
-  .menu__nav a {
-    padding: 14px 0;
-    font-size: 1.75rem;
-    font-weight: 560;
-    letter-spacing: -0.02em;
-    text-decoration: none;
-    border-bottom: 1px solid var(--hairline);
-  }
-  .menu__end {
-    margin-top: auto;
-    display: grid;
-    gap: 16px;
-  }
-  .menu__switch {
-    justify-self: center;
-    padding: 10px;
-    color: var(--ink-subtle);
-    text-decoration: none;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .menu[open] {
-      animation: menu-in 0.32s var(--ease-out);
-    }
-  }
-  @keyframes menu-in {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-  }
-
-  @media (max-width: 1023px) {
+  @media (max-width: 1179.98px) {
     .hdr__nav {
-      gap: 20px;
-    }
-    .hdr__inner {
-      gap: 24px;
-    }
-  }
-  @media (max-width: 899px) {
-    .hdr__nav,
-    .hdr__switch {
       display: none;
     }
     .hdr__burger {
-      display: block;
+      display: flex;
     }
-    .hdr__end {
-      gap: 10px;
+  }
+  @media (max-width: 767.98px) {
+    .hdr {
+      height: 56px;
     }
+    .hdr__demo {
+      height: 44px;
+    }
+  }
+  @media (max-width: 639.98px) {
+    .hdr__chrome {
+      display: none;
+    }
+  }
+
+  .mm {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid var(--hair);
+    overflow-y: auto;
+  }
+  .mm[hidden] {
+    display: none;
+  }
+  @media (max-width: 767.98px) {
+    .mm {
+      top: 56px;
+    }
+  }
+  .mm__link {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--hair);
+  }
+  .mm__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .mm__theme {
+    height: 46px;
+    padding: 0 18px;
+    border-radius: 9999px;
+    border: 1px solid var(--hairS);
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
   }
 </style>

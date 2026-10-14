@@ -4,57 +4,31 @@
     "description": "VILAX brings revenue, guests, staff and loyalty from each of your venues into one system. Built for owners of 1 to 9 venues. Request a demo.",
     "ogAlt": "VILAX: all your venues in one system"
   },
-  "a11y": {
-    "skip": "Skip to content",
-    "home": "VILAX home",
-    "nav": "Sections",
-    "menuOpen": "Open menu",
-    "menuClose": "Close menu",
-    "footerNav": "Footer links"
-  },
-  "chrome": {
-    "switchVersion": "Change region",
-    "demo": "Request a demo",
-    "clientLogin": "Client login",
-    "modeLocal": "Local build",
-    "modePreview": "Preview: requests are not sent"
-  },
-  "nav": {
+  "skip": "Skip to content",
+  "home": "VILAX home",
+  "nav": "Sections",
+  "menuOpen": "Open menu",
+  "menuClose": "Close menu",
+  "demo": "Request a demo",
+  "clientLogin": "Client login",
+  "navItems": {
     "platform": "Platform",
     "pricing": "Pricing",
     "onboarding": "Onboarding",
     "faq": "FAQ"
   },
-  "chooser": {
-    "title": "VILAX for your business",
-    "langLabel": "Screen language",
-    "region": {
-      "title": "Where do you operate?",
-      "open": "Open",
-      "ru": {
-        "segment": "For groups · 2+ locations",
-        "card": "Russia & CIS",
-        "sub": "Russian · RUB",
-        "note": "Every location of your group in one screen"
-      },
-      "en": {
-        "segment": "For owners of 1–9 venues",
-        "card": "UAE",
-        "sub": "English · AED",
-        "note": "All your venues in one system"
-      }
-    }
+  "langLabel": "Site language",
+  "curLabel": "Currency",
+  "cur": {
+    "rub": "Ruble",
+    "aed": "Dirham"
   },
+  "themeToLight": "Switch to light theme",
+  "themeToDark": "Switch to dark theme",
   "footer": {
-    "tagline": "One system for your restaurants",
     "documents": "Documents",
     "contacts": "Contact",
     "rights": "© 2026 VILAX"
-  },
-  "notFound": {
-    "title": "Page not found",
-    "text": "This address does not exist on the site.",
-    "back": "Open the English version"
   },
   "legal": {
     "privacy": "Privacy Policy",
@@ -62,14 +36,27 @@
     "support": "Support",
     "consent": "Consent to data processing"
   },
-  "home": {
-    "shotAlt": "{title}: VILAX screen on demo data",
-    "verified": "verified on staging",
-    "blocksTabs": "Platform blocks",
-    "speakerUser": "Question",
-    "speakerBot": "Coordinator",
-    "toBlock": "More about this block",
-    "soon": "Coming soon"
+  "notFound": {
+    "title": "Page not found",
+    "text": "This address does not exist on the site.",
+    "back": "Back to home"
+  },
+  "shotAlt": "{title}: VILAX screen on demo data",
+  "blocksTabs": "Platform blocks",
+  "video": {
+    "pause": "Pause",
+    "play": "Play"
+  },
+  "chrome": {
+    "modeLocal": "Local build",
+    "modePreview": "Preview: requests are not sent"
+  },
+  "send": {
+    "sending": "Sending…",
+    "failed": "We could not send your request. Your details are saved, so please try again or contact us directly.",
+    "unavailable": "Requests through the website are temporarily paused. Your details are saved, so please contact us directly and we will reply within one business day.",
+    "limited": "Too many requests in a row. Please try again in a few minutes or contact us directly.",
+    "invalid": "Please check the form and send it again."
   },
   "consent": {
     "text": "We use cookies and Yandex Metrica to see which parts of the site help. The counter stays off unless you allow it.",

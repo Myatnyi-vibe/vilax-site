@@ -15,7 +15,7 @@ import { pathToFileURL } from 'node:url';
 import { inlineScripts, sha256, VERIFY_FILE } from './csp.mjs';
 
 const REQUIRED = [
-  'index.html', 'ru/index.html', 'en/index.html', '404.html',
+  'index.html', 'ru/index.html', 'en/index.html', 'ru/en/index.html', 'en/ru/index.html', '404.html',
   'privacy.html', 'terms.html', 'support.html', 'ru/privacy.html', 'ru/terms.html', 'ru/support.html',
   'en/privacy.html', 'en/terms.html', 'en/support.html', 'ru/consent.html', 'en/consent.html',
   'sitemap.xml', 'robots.txt', 'favicon.svg', 'favicon.ico', 'apple-touch-icon.png',
@@ -23,9 +23,9 @@ const REQUIRED = [
 ];
 // Остатки сборки, которых на сервере быть не должно (Astro кладёт их в outDir вне корня проекта).
 const FORBIDDEN = [/^content-assets\.mjs$/, /^content-modules\.mjs$/, /^data-store\.json$/, /^settings\.json$/, /\.map$/, /(^|\/)\.env/, /^\.well-known\//];
-// Прод: страницы, которым noindex положен (экран выбора «/», 404 и синонимы /en/<doc> с canonical на прежний адрес).
-// Экран выбора (index.html) в проде — noindex, follow (SITE-17): индексируются /ru/ и /en/, а не корень-развилка.
-const PROD_NOINDEX = new Set(['index.html', '404.html', 'en/privacy.html', 'en/terms.html', 'en/support.html']);
+// Прод: страницы, которым noindex положен: 404, синонимы /en/<doc> (canonical на прежний адрес) и старые адреса версий
+// /ru/, /en/, /ru/en/, /en/ru/ — они ведут на «/» (одна страница, ТЗ медиа 14.10.2026); «/» индексируется.
+const PROD_NOINDEX = new Set(['404.html', 'en/privacy.html', 'en/terms.html', 'en/support.html', 'ru/index.html', 'en/index.html', 'ru/en/index.html', 'en/ru/index.html']);
 // Служебное, чего не должно быть в публичных файлах.
 const LEAKS = [
   [/localhost|127\.0\.0\.1|\[::1\]/, 'адрес стенда (localhost)'],
@@ -125,7 +125,7 @@ export function checkDist({ dist, mode, site = 'https://vilax.ai', base = '', le
     }
 
     // форма: превью никуда не шлёт, прод — только на --lead
-    for (const m of html.matchAll(/<dialog[^>]*\sdata-lead\b[^>]*>/g)) {
+    for (const m of html.matchAll(/<form[^>]*\sdata-lead-form\b[^>]*>/g)) {
       // пустое значение Astro выводит голым атрибутом: data-url
       const a = /\sdata-url(?:="([^"]*)")?(?=[\s>])/.exec(m[0]);
       const url = a ? (a[1] ?? '') : '(нет атрибута)';

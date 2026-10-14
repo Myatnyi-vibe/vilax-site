@@ -1,10 +1,14 @@
 ---
-// Правовая страница версии по прежнему адресу: /privacy, /terms, /support и /ru/-версии.
-// alias — синоним /en/<doc> для английской версии, canonical у него — прежний адрес.
-import Version from '../layouts/Version.astro';
-import { ui, type Lang } from '../i18n';
+// Правовая страница по прежнему адресу (/privacy, /terms, /support, /ru/*, /ru|en/consent). Вид — прототип «Legal»:
+// шапка в тоне обложки (плашки документов 36 px + H1), тело — лист в тоне платформы, max-width 760.
+// Документы — по валюте: русские (/ru/…) — документы РФ (₽), английские — ОАЭ (AED); валюта на странице закреплена.
+// alias — синоним /en/<doc> английской версии, canonical у него — прежний адрес.
+import Base from '../layouts/Base.astro';
+import T from './T.astro';
+import { va } from '../lib/content';
+import { ui } from '../i18n';
 import { legalHtml, type LegalDoc } from '../lib/legal';
-import { legalPath, url } from '../lib/site';
+import { legalPath, tone, url, LEGAL_DOCS, type Lang } from '../lib/site';
 
 interface Props {
   lang: Lang;
@@ -13,54 +17,98 @@ interface Props {
 }
 
 const { lang, doc, alias = false } = Astro.props;
-const t = ui(lang);
 const canonicalPath = legalPath(lang, doc);
-const html = legalHtml(lang, doc);
+// H1 документа выводит шапка страницы — из тела его убираем, чтобы на странице был один H1.
+const html = legalHtml(lang, doc).replace(/^\s*<h1>[\s\S]*?<\/h1>\s*/, '');
+const titles = { ru: `${ui('ru').legal[doc]} · VILAX`, en: `${ui('en').legal[doc]} · VILAX` };
 ---
 
-<Version
-  lang={lang}
-  title={`${t.legal[doc]} · VILAX`}
-  description={t.meta.description}
-  path={alias ? url(`/en/${doc}`) : canonicalPath}
-  canonicalPath={canonicalPath}
-  alternates={{ ru: legalPath('ru', doc), en: legalPath('en', doc) }}
-  noindex={alias}
->
-  <article class="legal container" set:html={html} />
-</Version>
+<Base page="legal" path={alias ? url(`/en/${doc}`) : canonicalPath} canonicalPath={canonicalPath} fixCur={lang === 'ru' ? 'rub' : 'aed'} titles={titles} noindex={alias}>
+  <section class="lg-head" {...tone('hero')} data-screen-label="Legal">
+    <div class="wrap lg-head__in">
+      <nav class="lg-docs" {...va('aria-label', (_, u) => u.footer.documents)}>
+        {LEGAL_DOCS.map((d) => <a href={legalPath(lang, d)} class="lg-doc" aria-current={d === doc ? 'page' : 'false'}><T get={(_, u) => u.legal[d]} /></a>)}
+      </nav>
+      <h1 class="lg-h1"><T get={(_, u) => u.legal[doc]} /></h1>
+    </div>
+  </section>
+  <section class="lg-body sheet" {...tone('platform')}>
+    <article class="lg-text" lang={lang} set:html={html} />
+  </section>
+</Base>
 
 <style>
-  .legal {
-    max-width: calc(46rem + 2 * var(--gutter));
-    padding-block: var(--sp-8) var(--sp-9);
+  .lg-head {
+    padding: clamp(120px, 12vw, 160px) 0 clamp(88px, 10vw, 144px);
   }
-  .legal :global(h1) {
-    font-size: var(--fs-display-md);
-    line-height: 1.1;
-    font-weight: var(--display-weight);
-    letter-spacing: -0.025em;
-    margin-bottom: var(--sp-3);
+  .lg-head__in {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
   }
-  .legal :global(h2) {
-    margin-top: var(--sp-7);
-    margin-bottom: var(--sp-3);
-    font-size: var(--fs-title);
+  .lg-docs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .lg-doc {
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 9999px;
+    border: 1px solid var(--hairS);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    background: transparent;
+    color: var(--ink);
+  }
+  .lg-doc[aria-current='page'] {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .lg-h1 {
+    font-size: clamp(36px, 4.4vw, 64px);
+    font-weight: 620;
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+    max-width: 20ch;
+  }
+  .lg-body {
+    padding: clamp(56px, 7vw, 96px) 0 clamp(88px, 10vw, 144px);
+  }
+  .lg-text {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 3vw, 40px);
+  }
+  .lg-text :global(h2) {
+    margin: 40px 0 12px;
+    font-size: 24px;
     font-weight: 600;
     letter-spacing: -0.01em;
+    line-height: 1.3;
   }
-  .legal :global(p),
-  .legal :global(li) {
-    color: var(--ink-muted);
-    max-width: 68ch;
+  .lg-text :global(p),
+  .lg-text :global(li) {
+    color: var(--muted);
   }
-  .legal :global(p + p) {
-    margin-top: var(--sp-3);
+  .lg-text :global(p + p) {
+    margin-top: 12px;
   }
-  .legal :global(a) {
-    color: var(--link);
+  .lg-text :global(ul),
+  .lg-text :global(ol) {
+    margin: 12px 0;
+    padding-left: 22px;
   }
-  .legal :global(.muted) {
-    color: var(--ink-subtle);
+  .lg-text :global(a) {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .lg-text :global(.muted) {
+    color: var(--subtle);
+    font-size: 14px;
   }
 </style>
