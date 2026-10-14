@@ -207,11 +207,7 @@
         "title": "Live",
         "text": "Your venues run on VILAX every day, with summaries delivered to Telegram."
       }
-    ],
-    "included": {
-      "title": "What standard onboarding includes",
-      "text": "With annual billing: one supported connection, user access set-up and a kick-off session for your team. Anything else is quoted separately."
-    }
+    ]
   },
   "lead": {
     "title": "Get a VILAX quote for your venues",

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-14T20:22:27.863Z",
+ "generatedAt": "2026-10-14T20:47:43.776Z",
  "shots": [
   {
    "cur": "rub",
@@ -3566,27 +3566,6 @@
    "cur": "rub",
    "lang": "ru",
    "theme": "dark",
-   "id": "g-booking",
-   "file": "shots/rub/ru/dark/g-booking.webp",
-   "width": 1600,
-   "height": 800,
-   "bytes": 26470,
-   "capturedAt": "2026-10-14",
-   "luma": 0.113,
-   "checks": {
-    "lang": true,
-    "currency": true,
-    "theme": true,
-    "notEmpty": true,
-    "masks": true
-   },
-   "status": "pass",
-   "source": "illustration"
-  },
-  {
-   "cur": "rub",
-   "lang": "ru",
-   "theme": "dark",
    "id": "g-reviews",
    "file": "shots/rub/ru/dark/g-reviews.webp",
    "width": 1600,
@@ -3615,27 +3594,6 @@
    "bytes": 50734,
    "capturedAt": "2026-10-14",
    "luma": 0.117,
-   "checks": {
-    "lang": true,
-    "currency": true,
-    "theme": true,
-    "notEmpty": true,
-    "masks": true
-   },
-   "status": "pass",
-   "source": "illustration"
-  },
-  {
-   "cur": "rub",
-   "lang": "ru",
-   "theme": "light",
-   "id": "g-booking",
-   "file": "shots/rub/ru/light/g-booking.webp",
-   "width": 1600,
-   "height": 800,
-   "bytes": 26262,
-   "capturedAt": "2026-10-14",
-   "luma": 0.949,
    "checks": {
     "lang": true,
     "currency": true,
@@ -3692,27 +3650,6 @@
    "cur": "rub",
    "lang": "en",
    "theme": "dark",
-   "id": "g-booking",
-   "file": "shots/rub/en/dark/g-booking.webp",
-   "width": 1600,
-   "height": 800,
-   "bytes": 25122,
-   "capturedAt": "2026-10-14",
-   "luma": 0.113,
-   "checks": {
-    "lang": true,
-    "currency": true,
-    "theme": true,
-    "notEmpty": true,
-    "masks": true
-   },
-   "status": "pass",
-   "source": "illustration"
-  },
-  {
-   "cur": "rub",
-   "lang": "en",
-   "theme": "dark",
    "id": "g-reviews",
    "file": "shots/rub/en/dark/g-reviews.webp",
    "width": 1600,
@@ -3741,27 +3678,6 @@
    "bytes": 47916,
    "capturedAt": "2026-10-14",
    "luma": 0.116,
-   "checks": {
-    "lang": true,
-    "currency": true,
-    "theme": true,
-    "notEmpty": true,
-    "masks": true
-   },
-   "status": "pass",
-   "source": "illustration"
-  },
-  {
-   "cur": "rub",
-   "lang": "en",
-   "theme": "light",
-   "id": "g-booking",
-   "file": "shots/rub/en/light/g-booking.webp",
-   "width": 1600,
-   "height": 800,
-   "bytes": 25368,
-   "capturedAt": "2026-10-14",
-   "luma": 0.949,
    "checks": {
     "lang": true,
     "currency": true,
@@ -3818,27 +3734,6 @@
    "cur": "aed",
    "lang": "ru",
    "theme": "dark",
-   "id": "g-booking",
-   "file": "shots/aed/ru/dark/g-booking.webp",
-   "width": 1600,
-   "height": 800,
-   "bytes": 26400,
-   "capturedAt": "2026-10-14",
-   "luma": 0.113,
-   "checks": {
-    "lang": true,
-    "currency": true,
-    "theme": true,
-    "notEmpty": true,
-    "masks": true
-   },
-   "status": "pass",
-   "source": "illustration"
-  },
-  {
-   "cur": "aed",
-   "lang": "ru",
-   "theme": "dark",
    "id": "g-reviews",
    "file": "shots/aed/ru/dark/g-reviews.webp",
    "width": 1600,
@@ -3867,27 +3762,6 @@
    "bytes": 47838,
    "capturedAt": "2026-10-14",
    "luma": 0.117,
-   "checks": {
-    "lang": true,
-    "currency": true,
-    "theme": true,
-    "notEmpty": true,
-    "masks": true
-   },
-   "status": "pass",
-   "source": "illustration"
-  },
-  {
-   "cur": "aed",
-   "lang": "ru",
-   "theme": "light",
-   "id": "g-booking",
-   "file": "shots/aed/ru/light/g-booking.webp",
-   "width": 1600,
-   "height": 800,
-   "bytes": 26598,
-   "capturedAt": "2026-10-14",
-   "luma": 0.949,
    "checks": {
     "lang": true,
     "currency": true,
@@ -3944,27 +3818,6 @@
    "cur": "aed",
    "lang": "en",
    "theme": "dark",
-   "id": "g-booking",
-   "file": "shots/aed/en/dark/g-booking.webp",
-   "width": 1600,
-   "height": 800,
-   "bytes": 24524,
-   "capturedAt": "2026-10-14",
-   "luma": 0.113,
-   "checks": {
-    "lang": true,
-    "currency": true,
-    "theme": true,
-    "notEmpty": true,
-    "masks": true
-   },
-   "status": "pass",
-   "source": "illustration"
-  },
-  {
-   "cur": "aed",
-   "lang": "en",
-   "theme": "dark",
    "id": "g-reviews",
    "file": "shots/aed/en/dark/g-reviews.webp",
    "width": 1600,
@@ -4007,27 +3860,6 @@
    "cur": "aed",
    "lang": "en",
    "theme": "light",
-   "id": "g-booking",
-   "file": "shots/aed/en/light/g-booking.webp",
-   "width": 1600,
-   "height": 800,
-   "bytes": 24736,
-   "capturedAt": "2026-10-14",
-   "luma": 0.949,
-   "checks": {
-    "lang": true,
-    "currency": true,
-    "theme": true,
-    "notEmpty": true,
-    "masks": true
-   },
-   "status": "pass",
-   "source": "illustration"
-  },
-  {
-   "cur": "aed",
-   "lang": "en",
-   "theme": "light",
    "id": "g-reviews",
    "file": "shots/aed/en/light/g-reviews.webp",
    "width": 1600,
@@ -4056,6 +3888,174 @@
    "bytes": 47698,
    "capturedAt": "2026-10-14",
    "luma": 0.946,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "ru",
+   "theme": "dark",
+   "id": "g-booking",
+   "file": "shots/rub/ru/dark/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 27476,
+   "capturedAt": "2026-10-14",
+   "luma": 0.114,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "ru",
+   "theme": "light",
+   "id": "g-booking",
+   "file": "shots/rub/ru/light/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 27356,
+   "capturedAt": "2026-10-14",
+   "luma": 0.949,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "en",
+   "theme": "dark",
+   "id": "g-booking",
+   "file": "shots/rub/en/dark/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 26130,
+   "capturedAt": "2026-10-14",
+   "luma": 0.113,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "rub",
+   "lang": "en",
+   "theme": "light",
+   "id": "g-booking",
+   "file": "shots/rub/en/light/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 26124,
+   "capturedAt": "2026-10-14",
+   "luma": 0.948,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "ru",
+   "theme": "dark",
+   "id": "g-booking",
+   "file": "shots/aed/ru/dark/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 27428,
+   "capturedAt": "2026-10-14",
+   "luma": 0.114,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "ru",
+   "theme": "light",
+   "id": "g-booking",
+   "file": "shots/aed/ru/light/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 27442,
+   "capturedAt": "2026-10-14",
+   "luma": 0.949,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "en",
+   "theme": "dark",
+   "id": "g-booking",
+   "file": "shots/aed/en/dark/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 25620,
+   "capturedAt": "2026-10-14",
+   "luma": 0.113,
+   "checks": {
+    "lang": true,
+    "currency": true,
+    "theme": true,
+    "notEmpty": true,
+    "masks": true
+   },
+   "status": "pass",
+   "source": "illustration"
+  },
+  {
+   "cur": "aed",
+   "lang": "en",
+   "theme": "light",
+   "id": "g-booking",
+   "file": "shots/aed/en/light/g-booking.webp",
+   "width": 1600,
+   "height": 800,
+   "bytes": 25584,
+   "capturedAt": "2026-10-14",
+   "luma": 0.949,
    "checks": {
     "lang": true,
     "currency": true,
