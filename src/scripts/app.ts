@@ -195,6 +195,8 @@ export function start() {
   const leadForm = initLeadForm(D);
   initHeroVideo(D);
 
+  // перелив логотипа в шапке (SMIL) — стоп при «уменьшить движение»
+  if (reduced) document.querySelectorAll<SVGSVGElement>('svg[data-logo-anim]').forEach((s) => s.pauseAnimations());
   if (!reduced) setupReveal();
   setup3d(() => ({ plat: platHover, theme: state.theme, reduced }));
 

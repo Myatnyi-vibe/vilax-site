@@ -5,6 +5,7 @@
 import T from '../T.astro';
 import { va } from '../../lib/content';
 import { tone, url, NAV_SECTIONS, LANGS, CURS } from '../../lib/site';
+import { MARK_VIEWBOX, MARK_PATH, WORD_VIEWBOX, WORD_PATH, CYCLE_STOPS } from '../brand/logo-paths';
 
 interface Props {
   page: 'home' | 'legal' | '404';
@@ -19,8 +20,30 @@ const CUR_LABEL = { rub: '₽', aed: 'AED' } as const;
 <header class:list={['hdr', { 'is-solid': !home }]} {...tone('base')} data-hdr>
   <div class="hdr__in">
     <a href={home ? '#top' : url('/')} class="hdr__home" data-go-home {...va('aria-label', (_, u) => u.home)}>
-      <img src={url('/logo.svg')} alt="" class="hdr__logo" />
-      <img src={url('/wordmark.svg')} alt="VILAX" class="hdr__word" />
+      {/* Знак и надпись переливаются, как на vilax.ai: градиент голубой → фиолетовый плывёт по кругу, сверху мягкий блик.
+          При «уменьшить движение» анимацию останавливает app.ts (pauseAnimations), блик скрыт. */}
+      <svg class="hdr__logo" viewBox={MARK_VIEWBOX} aria-hidden="true" focusable="false" data-logo-anim>
+        <defs>
+          <linearGradient id="hdr-cycle" x1="0" y1="0" x2="1" y2="0" spreadMethod="repeat">
+            {CYCLE_STOPS.map(([o, c]) => <stop offset={o} stop-color={c} />)}
+            <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="1 0" dur="6s" repeatCount="indefinite" />
+          </linearGradient>
+          <linearGradient id="hdr-shine" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#fff" stop-opacity="0" />
+            <stop offset=".42" stop-color="#fff" stop-opacity="0" />
+            <stop offset=".5" stop-color="#fff" stop-opacity=".6" />
+            <stop offset=".58" stop-color="#fff" stop-opacity="0" />
+            <stop offset="1" stop-color="#fff" stop-opacity="0" />
+            <animateTransform attributeName="gradientTransform" type="translate" from="-1.4 0" to="1.4 0" dur="6s" repeatCount="indefinite" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#hdr-cycle)" d={MARK_PATH} />
+        <path class="hdr__shine" fill="url(#hdr-shine)" d={MARK_PATH} />
+      </svg>
+      <svg class="hdr__word" viewBox={WORD_VIEWBOX} aria-hidden="true" focusable="false" data-logo-anim>
+        <path fill="url(#hdr-cycle)" d={WORD_PATH} />
+        <path class="hdr__shine" fill="url(#hdr-shine)" d={WORD_PATH} />
+      </svg>
     </a>
     <nav class="hdr__nav" {...va('aria-label', (_, u) => u.nav)}>
       {NAV_SECTIONS.map((k) => <a href={anchor(k)} data-go={k}><T get={(_, u) => u.navItems[k]} /></a>)}
@@ -103,10 +126,20 @@ const CUR_LABEL = { rub: '₽', aed: 'AED' } as const;
   .hdr__logo {
     width: 30px;
     height: auto;
+    aspect-ratio: 712 / 608;
   }
   .hdr__word {
     height: 13px;
     width: auto;
+    aspect-ratio: 424 / 64;
+  }
+  .hdr__shine {
+    mix-blend-mode: screen;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hdr__shine {
+      display: none;
+    }
   }
   .hdr__nav {
     display: flex;

@@ -1,4 +1,4 @@
-// Иконки и картинки для соцсетей из знака VILAX (без фиолетового): node scripts/make-images.mjs
+// Иконки и картинки для соцсетей из знака VILAX в фирменной расцветке: node scripts/make-images.mjs (после make-logos.mjs)
 // public/favicon.svg, favicon.ico (32), apple-touch-icon.png (180), og/{ru,en,x}.png (1200×630).
 // Тексты — из src/i18n (meta.ogAlt), шрифты — подмножества из public/fonts.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -21,8 +21,9 @@ const css = `
 @font-face{font-family:Inter;src:url(${font('inter-cyrillic.woff2')}) format('woff2');font-weight:100 900;unicode-range:U+0400-04FF,U+20BD,U+2116}
 *{box-sizing:border-box;margin:0}
 body{font-family:Inter,sans-serif;-webkit-font-smoothing:antialiased}`;
-const grad = (id, a = '#18F2DF', b = '#2297FF') =>
-  `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="184" y1="0" x2="896" y2="0"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>`;
+const STOPS = [...paths.match(/BRAND_STOPS[^=]*=\s*\[([\s\S]*?)\];/)[1].matchAll(/\[([\d.]+),\s*'(#[0-9A-Fa-f]{6})'\]/g)].map((m) => [+m[1], m[2]]);
+const grad = (id) =>
+  `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="184" y1="0" x2="896" y2="0">${STOPS.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>`;
 const mark = (id, style) => `<svg viewBox="184 170 712 608" style="${style}"><defs>${grad(id)}</defs><path fill="url(#${id})" d="${MARK}"/></svg>`;
 const word = (color, style) => `<svg viewBox="328 846 424 64" style="${style}"><path fill="${color}" d="${WORD}"/></svg>`;
 // Русская типографика: короткие слова не висят в конце строки
@@ -41,12 +42,12 @@ const og = {
     <p style="position:absolute;left:72px;bottom:96px;width:720px;font-size:76px;line-height:1.02;font-weight:620;letter-spacing:-0.04em">${cap(en.meta.ogAlt.split(': ')[1] ?? en.meta.ogAlt)}</p>
   </div>`,
   x: `<div style="width:1200px;height:630px;position:relative;display:flex;overflow:hidden">
-    <div style="flex:1;background:#020817;color:#F5F7FA;padding:0 56px 64px;display:flex;align-items:flex-end;font-size:64px;font-weight:620;letter-spacing:-0.045em">${ru.chooser.region.ru.card}</div>
-    <div style="flex:1;background:#F5F7FA;color:#020817;padding:0 56px 64px;display:flex;align-items:flex-end;justify-content:flex-end;font-size:64px;font-weight:620;letter-spacing:-0.045em">${ru.chooser.region.en.card}</div>
+    <div style="flex:1;background:#020817;color:#F5F7FA;padding:0 56px 64px;display:flex;align-items:flex-end;font-size:64px;font-weight:620;letter-spacing:-0.045em">${ru.chooser?.region?.ru?.card ?? 'Россия и СНГ'}</div>
+    <div style="flex:1;background:#F5F7FA;color:#020817;padding:0 56px 64px;display:flex;align-items:flex-end;justify-content:flex-end;font-size:64px;font-weight:620;letter-spacing:-0.045em">${ru.chooser?.region?.en?.card ?? 'ОАЭ'}</div>
     ${mark('m', 'position:absolute;left:50%;top:44%;width:420px;transform:translate(-50%,-50%)')}
   </div>`,
 };
-const icon = (size) => `<div style="width:${size}px;height:${size}px;background:#020817;display:grid;place-items:center">${mark('m', `width:${Math.round(size * 0.74)}px`)}</div>`;
+const icon = (size) => `<div style="width:${size}px;height:${size}px;background:#001543;display:grid;place-items:center">${mark('m', `width:${Math.round(size * 0.74)}px`)}</div>`;
 
 const browser = await puppeteer.launch({ executablePath: browserPath(), headless: true, args: ['--no-first-run'] });
 const page = await browser.newPage();
