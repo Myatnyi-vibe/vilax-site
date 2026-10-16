@@ -75,6 +75,45 @@ import { tone, url, legalPath, LEGAL_DOCS, LEGAL_LANG, APP_URL, SUPPORT_EMAIL } 
   .ftr__col a:hover {
     color: var(--accent);
   }
+  /* SITE-45 P1-7 (телефон): ссылки — строки касания 44 px; шаг почти прежний (было 23 + 10). */
+  @media (max-width: 767.98px) {
+    .ftr__col {
+      gap: 0;
+    }
+    .ftr__h {
+      margin-bottom: 4px;
+    }
+    .ftr__col a {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 6px 0;
+      align-self: flex-start;
+    }
+  }
+  /* SITE-45 (планшет, сенсорный): ссылки — строки касания 44 px, как на телефоне. */
+  @media (min-width: 768px) and (max-width: 1179.98px) {
+    .ftr__col {
+      gap: 0;
+    }
+    .ftr__h {
+      margin-bottom: 4px;
+    }
+    .ftr__col a {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 6px 0;
+      align-self: flex-start;
+    }
+  }
+  /* SITE-45 P2-5 (планшет-портрет): три колонки в ряд — «Документы» не уходят на вторую строку с пустотой справа. */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    .ftr__cols {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+  }
   .ftr__bottom {
     display: flex;
     justify-content: space-between;

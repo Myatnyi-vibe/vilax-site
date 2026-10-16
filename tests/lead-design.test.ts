@@ -1,7 +1,7 @@
 // Форма дизайна 14.10.2026 (SITE-26): проверки как в прототипе и поля приёмника SITE-15. Имена и телефоны — выдуманные.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkDesignLead, designBody, designPhone } from '../src/lib/lead.ts';
+import { checkDesignLead, designBody, designPhone, designPhoneShown } from '../src/lib/lead.ts';
 
 const meta = { section: 'pricing', page: '/', utm: null, consentVersion: 'v1', requestRef: 'web-1', honeypot: '', elapsedMs: 5000 };
 
@@ -38,4 +38,29 @@ test('форма дизайна → приёмник: company → venue, сет�
   const mixed = designBody({ name: 'Ann', phone: '+7 900 000 0000', city: 'Moscow', company: 'Cafe', chain: false, locations: '' }, { ...meta, cur: 'rub', lang: 'en' });
   assert.equal(mixed.region, 'RU');
   assert.equal(mixed.site, 'en');
+});
+
+test('SITE-50: телефон ОАЭ без +971 верный в AED; ₽ — как было (10–15 цифр)', () => {
+  const x = { name: 'Ann', city: 'Dubai', company: 'Cafe', chain: false, locations: '' };
+  assert.deepEqual(checkDesignLead({ ...x, phone: '50 123 4567' }, 'aed'), {});
+  assert.deepEqual(checkDesignLead({ ...x, phone: '050 123 4567' }, 'aed'), {});
+  assert.deepEqual(checkDesignLead({ ...x, phone: '+971 50 123 4567' }, 'aed'), {});
+  assert.deepEqual(checkDesignLead({ ...x, phone: '+44 20 7946 0958' }, 'aed'), {});
+  assert.deepEqual(checkDesignLead({ ...x, phone: '50 123 45' }, 'aed'), { phone: 'phoneBad' });
+  assert.deepEqual(checkDesignLead({ ...x, phone: '50 123 4567' }, 'rub'), { phone: 'phoneBad' });
+  assert.deepEqual(checkDesignLead({ ...x, phone: '50 123 4567' }), { phone: 'phoneBad' });
+  assert.deepEqual(checkDesignLead({ ...x, phone: '900 123 45 67' }, 'rub'), {});
+  assert.deepEqual(checkDesignLead({ ...x, phone: '0123456789' }, 'rub'), {});
+  assert.equal(designBody({ ...x, phone: '50 123 4567' }, { ...meta, cur: 'aed', lang: 'en' }).phone, '+971501234567');
+});
+
+test('SITE-50: «Спасибо» — номер в формате страны', () => {
+  assert.equal(designPhoneShown('rub', '9001234567'), '+7 900 123-45-67');
+  assert.equal(designPhoneShown('rub', '8 (900) 123-45-67'), '+7 900 123-45-67');
+  assert.equal(designPhoneShown('aed', '50 123 4567'), '+971 50 123 4567');
+  assert.equal(designPhoneShown('aed', '0501234567'), '+971 50 123 4567');
+  assert.equal(designPhoneShown('rub', '+971 50 123 4567'), '+971 50 123 4567');
+  assert.equal(designPhoneShown('aed', '+44 20 7946 0958'), '+442079460958');
+  assert.equal(designPhoneShown('rub', ' 0123456789 '), '+7 012 345-67-89');
+  assert.equal(designPhoneShown('aed', ' 12-34 '), '12-34');
 });

@@ -8,6 +8,7 @@ import { ui } from '../i18n';
 import { url, tone, PREFS_KEY, type Cur } from '../lib/site';
 import { mediaMap } from '../lib/media';
 import { siteOf } from '../lib/content';
+import { typo } from '../lib/typo';
 import { VARIANTS } from '../lib/site';
 import Header from '../components/site/Header.astro';
 import Footer from '../components/site/Footer.astro';
@@ -50,7 +51,13 @@ const pageData = {
     ru: { themeToLight: ui('ru').themeToLight, themeToDark: ui('ru').themeToDark, menuOpen: ui('ru').menuOpen, menuClose: ui('ru').menuClose, video: ui('ru').video, shotAlt: ui('ru').shotAlt, send: ui('ru').send },
     en: { themeToLight: ui('en').themeToLight, themeToDark: ui('en').themeToDark, menuOpen: ui('en').menuOpen, menuClose: ui('en').menuClose, video: ui('en').video, shotAlt: ui('en').shotAlt, send: ui('en').send },
   },
-  lead: Object.fromEntries(VARIANTS.map((v) => [`${v.cur}-${v.lang}`, { err: siteOf(v).lead.err, phonePh: siteOf(v).lead.phonePh, doneTitle: siteOf(v).lead.doneTitle, doneText: siteOf(v).lead.doneText }])),
+  // тексты формы, которые подставляет скрипт: русский — через typo (SITE-47), placeholder — как в словаре
+  lead: Object.fromEntries(VARIANTS.map((v) => {
+    const L = siteOf(v).lead;
+    const t = (s: string) => typo(v.lang, s);
+    const err = Object.fromEntries(Object.entries(L.err).map(([k, s]) => [k, t(s)])) as typeof L.err;
+    return [`${v.cur}-${v.lang}`, { err, phonePh: L.phonePh, doneTitle: t(L.doneTitle), doneText: t(L.doneText) }];
+  })),
 };
 ---
 

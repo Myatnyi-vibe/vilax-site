@@ -297,14 +297,33 @@ function setup3d(getState: () => { plat: string | null; theme: Theme; reduced: b
   const slots = document.querySelectorAll('[data-vlx3d]');
   if (!slots.length) return;
   let booting = false;
+  // SITE-49 (скорость): сцены грузятся только после первого действия человека (прокрутка, касание, клавиша, колесо) —
+  // при загрузке страницы слоты 3D всегда ниже первого экрана, поэтому вид не меняется, а поток не занят до начала
+  // прокрутки (Lighthouse: TBT телефона 5,8 с из-за сцены, стартовавшей до первого действия).
+  let near = false;
+  let intent = false;
+  const boot = () => {
+    if (booting || !near || !intent) return;
+    booting = true;
+    io.disconnect();
+    import('../scenes/vilax3d.js').then((m) => m.boot({ getState })).catch(() => {});
+  };
   const io = new IntersectionObserver(
     (es) => {
-      if (!es.some((e) => e.isIntersecting) || booting) return;
-      booting = true;
-      io.disconnect();
-      import('../scenes/vilax3d.js').then((m) => m.boot({ getState })).catch(() => {});
+      if (!es.some((e) => e.isIntersecting)) return;
+      near = true;
+      boot();
     },
     { rootMargin: '800px 0px' },
   );
+  const onIntent = () => {
+    intent = true;
+    for (const t of INTENT) removeEventListener(t, onIntent);
+    boot();
+  };
+  const INTENT = ['scroll', 'wheel', 'touchstart', 'pointerdown', 'keydown'] as const;
+  for (const t of INTENT) addEventListener(t, onIntent, { passive: true });
+  // открыли страницу уже прокрученной (якорь, возврат назад) — действие уже было
+  if (scrollY > 0 || location.hash) onIntent();
   requestAnimationFrame(() => slots.forEach((el) => io.observe(el)));
 }

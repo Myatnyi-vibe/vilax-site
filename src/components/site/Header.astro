@@ -252,10 +252,65 @@ const CUR_LABEL = { rub: '₽', aed: 'AED' } as const;
     .hdr__demo {
       height: 44px;
     }
+    /* SITE-41 (телефон): зазоры уже, чтобы на 640–767 RU/EN, ₽/AED, тема, кнопка и бургер помещались,
+       а касания были ≥ 44 px. Сегмент остаётся 46 px по высоте, кнопка внутри — 38, зона касания — вся высота сегмента. */
+    .hdr__in {
+      gap: 16px;
+    }
+    .hdr__right {
+      gap: 8px;
+    }
+    .hdr__chrome .seg__b {
+      position: relative;
+      height: 38px;
+      min-width: 44px;
+    }
+    .hdr__chrome .seg__b::after {
+      content: '';
+      position: absolute;
+      inset: -4px 0;
+    }
+    .hdr__theme {
+      width: 44px;
+      height: 44px;
+    }
   }
   @media (max-width: 639.98px) {
     .hdr__chrome {
       display: none;
+    }
+  }
+  /* SITE-41 P0-1: на 360 лого + «Запросить демо» + бургер не помещались (369 px), бургер обрезался. */
+  @media (max-width: 389.98px) {
+    .hdr__in {
+      gap: 12px;
+    }
+    .hdr__demo {
+      padding: 0 10px;
+    }
+  }
+  /* SITE-41 P1-1 (планшет, сенсорный): касания ≥ 44 — как у телефона 640–767: кнопка сегмента 38, зона касания
+     на всю высоту сегмента (46), тема и «Запросить демо» 44. На 768 всё помещается (~680 px из 768). */
+  @media (min-width: 768px) and (max-width: 1179.98px) {
+    .hdr__chrome .seg__b {
+      position: relative;
+      height: 38px;
+      min-width: 44px;
+    }
+    .hdr__chrome .seg__b::after {
+      content: '';
+      position: absolute;
+      inset: -4px 0;
+    }
+    .hdr__theme {
+      width: 44px;
+      height: 44px;
+    }
+    .hdr__demo {
+      height: 44px;
+    }
+    .mm .seg__b--m {
+      height: 44px;
     }
   }
 
@@ -279,6 +334,10 @@ const CUR_LABEL = { rub: '₽', aed: 'AED' } as const;
   @media (max-width: 767.98px) {
     .mm {
       top: 56px;
+    }
+    /* SITE-41 P1-2: переключатели в меню — касание 44 px. */
+    .mm .seg__b--m {
+      height: 44px;
     }
   }
   .mm__link {

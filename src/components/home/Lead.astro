@@ -231,6 +231,12 @@ const consentVersion = { rub: form.consentVersion, aed: formEn.consentVersion };
     font-size: 16px;
     font-weight: 600;
   }
+  /* SITE-45 P2-3 (телефон): «У меня сеть» — касание на всю строку 44 px, не только по тексту. */
+  @media (max-width: 767.98px) {
+    .ld__chain {
+      width: 100%;
+    }
+  }
   .ld__cb {
     flex: none;
     width: 20px;

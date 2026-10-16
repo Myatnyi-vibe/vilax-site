@@ -20,6 +20,25 @@ export function initBlocks(D: PageData) {
   const items = (panel: HTMLElement, a: Axes) => Array.from(featList(panel, a)?.querySelectorAll<HTMLElement>('.bl__li') ?? []);
   const has = (a: Axes, id: string | undefined) => !!id && shotCode(D, a, id) !== '0';
 
+  // SITE-43: полоса вкладок шире экрана только на телефоне — там края затухают (data-edge, стили в Blocks.astro),
+  // а выбранная вкладка прокручивается к середине полосы (только < 768). Только по горизонтали: страница не сдвигается.
+  const tablist = document.querySelector<HTMLElement>('[data-tablist]');
+  const edges = () => {
+    if (!tablist) return;
+    const max = tablist.scrollWidth - tablist.clientWidth;
+    tablist.dataset.edge = max <= 1 ? 'none' : tablist.scrollLeft <= 1 ? 'start' : tablist.scrollLeft >= max - 1 ? 'end' : 'mid';
+  };
+  const phone = matchMedia('(max-width: 767.98px)');
+  const scrolls = () => phone.matches && !!tablist && tablist.scrollWidth > tablist.clientWidth + 1;
+  const reveal = (k: string) => {
+    const t = document.getElementById(`tab-${k}`);
+    if (!tablist || !t || !scrolls()) return;
+    const lr = tablist.getBoundingClientRect();
+    const tr = t.getBoundingClientRect();
+    const left = tablist.scrollLeft + tr.left - lr.left - (tablist.clientWidth - tr.width) / 2;
+    tablist.scrollTo({ left, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+
   function render() {
     const a = axes();
     tabs.forEach((t, i) => {
@@ -69,7 +88,8 @@ export function initBlocks(D: PageData) {
     feat = -1;
     featHover = null;
     render();
-    if (focus) document.getElementById(`tab-${k}`)?.focus();
+    reveal(k);
+    if (focus) document.getElementById(`tab-${k}`)?.focus({ preventScroll: scrolls() });
   }
 
   tabs.forEach((t) => {
@@ -120,7 +140,14 @@ export function initBlocks(D: PageData) {
     }),
   );
 
-  onAxes(() => render());
+  onAxes(() => {
+    render();
+    edges();
+  });
+  tablist?.addEventListener('scroll', edges, { passive: true });
+  addEventListener('resize', edges, { passive: true });
   render();
+  edges();
+  document.fonts?.ready.then(edges);
   return { openTab: (k: string) => select(k) };
 }

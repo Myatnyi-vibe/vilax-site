@@ -247,13 +247,16 @@ export type DesignField = 'name' | 'phone' | 'city' | 'company' | 'locations';
  */
 export type DesignErrors = Partial<Record<DesignField, 'name' | 'phone' | 'phoneBad' | 'city' | 'cityBad' | 'company' | 'locations'>>;
 
-/** Проверка как в прототипе (submitLead): имя, телефон 10–15 цифр, компания, при сети — от 2 локаций. */
-export function checkDesignLead(x: DesignLead): DesignErrors {
+/**
+ * Проверка как в прототипе (submitLead): имя, телефон, компания, при сети — от 2 локаций. Телефон: ₽ — 10–15 цифр, как
+ * было; AED — по designPhone: номер ОАЭ без кода (50 123 4567, 9 цифр) тоже верный (SITE-50).
+ */
+export function checkDesignLead(x: DesignLead, cur: LeadCur = 'rub'): DesignErrors {
   const e: DesignErrors = {};
   const n = digits(x.phone).length;
   if (!x.name.trim()) e.name = 'name';
   if (!n) e.phone = 'phone';
-  else if (n < 10 || n > 15) e.phone = 'phoneBad';
+  else if (cur === 'aed' ? designPhone(cur, x.phone) === null : n < 10 || n > 15) e.phone = 'phoneBad';
   if (!x.city.trim()) e.city = 'city';
   else if (cleanText('city', x.city) === null) e.city = 'cityBad';
   if (!x.company.trim()) e.company = 'company';
@@ -264,6 +267,15 @@ export function checkDesignLead(x: DesignLead): DesignErrors {
 /** Телефон для приёмника: сначала по стране валюты (+7 / +971), иначе как номер другой страны (10–15 цифр). */
 export function designPhone(cur: LeadCur, raw: string): string | null {
   return phoneDigits(CUR_COUNTRY[cur], raw) ?? phoneDigits('other', raw);
+}
+
+/** Номер для «Спасибо» в формате страны: +7 900 123-45-67, +971 50 123 4567, другой — +цифры; не разобран — как ввели. */
+export function designPhoneShown(cur: LeadCur, raw: string): string {
+  const d = designPhone(cur, raw);
+  if (!d) return raw.trim();
+  if (d.length === 11 && d.startsWith('7')) return `+7 ${d.slice(1, 4)} ${d.slice(4, 7)}-${d.slice(7, 9)}-${d.slice(9)}`;
+  if (d.length === 12 && d.startsWith('971')) return `+971 ${d.slice(3, 5)} ${d.slice(5, 8)} ${d.slice(8)}`;
+  return `+${d}`;
 }
 
 export interface DesignMeta {

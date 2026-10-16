@@ -184,4 +184,38 @@ const block = (s: ReturnType<typeof siteOf>, k: string) => s.blocks.find((b) => 
     pointer-events: none;
     will-change: transform;
   }
+  /* SITE-44 (телефон). P1-6: на 360–430 блоки сцены близко — подписи компактнее, чтобы не наезжали друг на друга
+     (сцена и модели те же). P2-2: названия блоков — строка касания 44 px, шаг списка как был (~44). */
+  @media (max-width: 767.98px) {
+    .pl__label {
+      max-width: 92px;
+      font-size: 11px;
+      padding: 4px 8px;
+    }
+    .pl__list {
+      gap: 0;
+    }
+    .pl__li {
+      padding: 0;
+    }
+    .pl__name {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
+  }
+  /* SITE-49 (ворота, планшет): названия блоков — строка касания 44 px, как на телефоне (P2-2 — для всех < 1180). */
+  @media (min-width: 768px) and (max-width: 1179.98px) {
+    .pl__list {
+      gap: 0;
+    }
+    .pl__li {
+      padding: 0;
+    }
+    .pl__name {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
+  }
 </style>

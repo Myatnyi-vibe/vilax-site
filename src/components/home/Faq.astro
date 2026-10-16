@@ -2,6 +2,7 @@
 // Вопросы (прототип «FAQ»): H2 sticky top 96, список <details>. Вопросы про франшизу убраны (решения владельца 13.10).
 import T from '../T.astro';
 import { siteOf } from '../../lib/content';
+import { typo } from '../../lib/typo';
 import { tone, VARIANTS } from '../../lib/site';
 ---
 
@@ -15,10 +16,10 @@ import { tone, VARIANTS } from '../../lib/site';
             {siteOf(v).faq.items.map((q) => (
               <details class="fq__d">
                 <summary class="fq__s">
-                  {q.q}
+                  {typo(v.lang, q.q)}
                   <span aria-hidden="true" class="fq__plus">+</span>
                 </summary>
-                <p class="fq__a">{q.a}</p>
+                <p class="fq__a">{typo(v.lang, q.a)}</p>
               </details>
             ))}
           </div>
@@ -38,6 +39,12 @@ import { tone, VARIANTS } from '../../lib/site';
   .fq__h2 {
     position: sticky;
     top: 96px;
+  }
+  /* SITE-42 P0-3: в одну колонку прилипший заголовок наезжал на вопросы при прокрутке. */
+  @media (max-width: 767.98px) {
+    .fq__h2 {
+      position: static;
+    }
   }
   .fq__list {
     display: flex;
@@ -70,5 +77,14 @@ import { tone, VARIANTS } from '../../lib/site';
     font-size: 16px;
     color: var(--muted);
     max-width: 64ch;
+  }
+  /* Планшет-портрет: слева пустая колонка с одним заголовком, вопросы сжаты — одна колонка, заголовок без sticky (SITE-42, P2-4) */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    .fq__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .fq__h2 {
+      position: static;
+    }
   }
 </style>

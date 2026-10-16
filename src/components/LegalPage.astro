@@ -8,6 +8,7 @@ import T from './T.astro';
 import { va } from '../lib/content';
 import { ui } from '../i18n';
 import { legalHtml, type LegalDoc } from '../lib/legal';
+import { typo } from '../lib/typo';
 import { legalPath, tone, url, LEGAL_DOCS, type Lang } from '../lib/site';
 
 interface Props {
@@ -19,7 +20,8 @@ interface Props {
 const { lang, doc, alias = false } = Astro.props;
 const canonicalPath = legalPath(lang, doc);
 // H1 документа выводит шапка страницы — из тела его убираем, чтобы на странице был один H1.
-const html = legalHtml(lang, doc).replace(/^\s*<h1>[\s\S]*?<\/h1>\s*/, '');
+// Русский текст — через typo (SITE-47): правила трогают только кириллицу и «—», разметку не меняют.
+const html = typo(lang, legalHtml(lang, doc).replace(/^\s*<h1>[\s\S]*?<\/h1>\s*/, ''));
 const titles = { ru: `${ui('ru').legal[doc]} · VILAX`, en: `${ui('en').legal[doc]} · VILAX` };
 ---
 
@@ -64,6 +66,17 @@ const titles = { ru: `${ui('ru').legal[doc]} · VILAX`, en: `${ui('en').legal[do
     background: transparent;
     color: var(--ink);
   }
+  /* SITE-49 (ворота): на телефоне и планшете вид тот же (36 px), зона касания — 44 по высоте. */
+  @media (max-width: 1179.98px) {
+    .lg-doc {
+      position: relative;
+    }
+    .lg-doc::after {
+      content: '';
+      position: absolute;
+      inset: -4px 0;
+    }
+  }
   .lg-doc[aria-current='page'] {
     background: var(--ink);
     color: var(--bg);
@@ -74,6 +87,13 @@ const titles = { ru: `${ui('ru').legal[doc]} · VILAX`, en: `${ui('en').legal[do
     line-height: 1.06;
     letter-spacing: -0.03em;
     max-width: 20ch;
+  }
+  /* SITE-41 P0-2: на 360 слово «конфиденциальности» в H1 36 px шире строки → страница 371 px, прокрутка вбок.
+     До 390 размер плавно растёт к прежним 36 px. */
+  @media (max-width: 389.98px) {
+    .lg-h1 {
+      font-size: min(36px, 9.2vw);
+    }
   }
   .lg-body {
     padding: clamp(56px, 7vw, 96px) 0 clamp(88px, 10vw, 144px);

@@ -2,6 +2,10 @@
 // Обложка (прототип «Hero»). Ролик SITE-10 — строго своего сочетания валюта × язык × тема (медиа-слой SITE-25):
 // 16:9 на компьютере, 9:16 на телефоне (< 768). Кадр-обложку ставит скрипт сразу после рамки — до первой отрисовки;
 // ролик подключает src/scripts/hero-video.ts. Нет ролика у сочетания (не прошёл проверку) — рамки нет.
+// SITE-51 (слово Данила 15.10): ролик — в экране устройства, только CSS: ≥ 1180 MacBook (16:9 в экране 16:10, основа
+// корпуса), 768–1179 iPad альбомно (16:9 в экране 2360:1640), < 768 iPhone (9:16 в экране 9:19,5). Полосы вокруг ролика —
+// цвет края того, что в экране (кадр-обложка, ролик по ходу); размеры — от ширины рамки (cqw) и aspect-ratio, место задано заранее (CLS 0).
+// Снимок блока вместо ролика (.is-shot) — прежняя рамка 2:1 без устройства.
 import T from '../T.astro';
 import { va } from '../../lib/content';
 import { tone } from '../../lib/site';
@@ -17,16 +21,87 @@ import { tone } from '../../lib/site';
       <a href="#pricing" class="hero__b hero__b--ghost" data-go="pricing" data-reveal-btn><T get={(s) => s.hero.ctaPrices} /></a>
     </div>
     <figure class="hero__fig" data-reveal data-ri="4" data-hero-fig>
-      <div class="hero__screen" data-hero-screen>
-        <img class="hero__poster" data-hero-poster width="1600" height="900" fetchpriority="high" {...va('alt', (s) => s.hero.panel)} />
-        <span class="media-ph" data-hero-ph hidden></span>
+      <div class="dev__lid">
+        <span class="dev__keys" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="dev__cam" aria-hidden="true"></span>
+        <div class="dev__glass">
+          <span class="dev__notch" aria-hidden="true"></span>
+          <span class="dev__bar" aria-hidden="true">
+            <span class="dev__time">9:41</span>
+            <svg class="dev__ico" viewBox="0 0 64 12" focusable="false">
+              <rect x="0" y="8" width="3" height="4" rx=".8" /><rect x="4.5" y="6" width="3" height="6" rx=".8" />
+              <rect x="9" y="3.5" width="3" height="8.5" rx=".8" /><rect x="13.5" y="1" width="3" height="11" rx=".8" />
+              <path d="M22.6 7.1a5.5 5.5 0 0 1 7.8 0M20.1 4.6a9 9 0 0 1 12.7 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <circle cx="26.5" cy="10.4" r="1.5" />
+              <rect x="38.5" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4" />
+              <rect x="40.5" y="3.5" width="17" height="5" rx="1.3" /><rect x="61" y="4.5" width="1.6" height="3" rx=".7" fill-opacity=".4" />
+            </svg>
+          </span>
+          <div class="hero__screen" data-hero-screen>
+            <img class="hero__poster" data-hero-poster width="1600" height="900" fetchpriority="high" {...va('alt', (s) => s.hero.panel)} />
+            <span class="media-ph" data-hero-ph hidden></span>
+          </div>
+          <span class="dev__home" aria-hidden="true"></span>
+        </div>
       </div>
+      <span class="dev__hinge" aria-hidden="true"></span>
+      <span class="dev__base" aria-hidden="true"></span>
     </figure>
     <script is:inline>
       window.__vlxHeroPoster && window.__vlxHeroPoster();
     </script>
   </div>
 </section>
+
+<script>
+  // Полосы экрана устройства (SITE-51) — цвет края того, что сейчас в экране: кадр-обложка при загрузке, ролик — раз в
+  // секунду, пока играет и обложка на экране (край у сцен ролика разный; чаще — дорого телефону: SITE-49, Lighthouse). Верх и низ — отдельно (--vtop, --vbot). Чужой источник или ошибка
+  // чтения — остаётся цвет темы (--vbg).
+  const fig = document.querySelector<HTMLElement>('[data-hero-fig]');
+  const scr = fig?.querySelector<HTMLElement>('[data-hero-screen]');
+  const img = scr?.querySelector<HTMLImageElement>('[data-hero-poster]');
+  if (fig && scr && img) {
+    const cv = document.createElement('canvas');
+    cv.width = 16;
+    cv.height = 1;
+    const cx = cv.getContext('2d', { willReadFrequently: true });
+    if (cx) cx.imageSmoothingQuality = 'high';
+    // край кадра — 16 замеров по ширине (у роликов по краю виньетка): градиент слева направо
+    const edge = (src: CanvasImageSource, w: number, h: number, top: boolean) => {
+      cx!.clearRect(0, 0, 16, 1);
+      cx!.drawImage(src, 0, top ? 0 : h - 3, w, 3, 0, 0, 16, 1);
+      const d = cx!.getImageData(0, 0, 16, 1).data;
+      const stops: string[] = [];
+      for (let i = 0; i < 16; i++) stops.push(`rgb(${d[i * 4]} ${d[i * 4 + 1]} ${d[i * 4 + 2]}) ${((i + 0.5) * 6.25).toFixed(3)}%`);
+      return `linear-gradient(90deg, ${stops.join(', ')})`;
+    };
+    let last = '';
+    const paint = (src: CanvasImageSource, w: number, h: number) => {
+      if (!cx || !w || !h || fig.classList.contains('is-shot')) return;
+      try {
+        const top = edge(src, w, h, true);
+        const bot = edge(src, w, h, false);
+        if (top + bot === last) return;
+        last = top + bot;
+        fig.style.setProperty('--vtop', top);
+        fig.style.setProperty('--vbot', bot);
+      } catch {
+        fig.style.removeProperty('--vtop');
+        fig.style.removeProperty('--vbot');
+      }
+    };
+    const fromPoster = () => img.complete && paint(img, img.naturalWidth, img.naturalHeight);
+    img.addEventListener('load', fromPoster);
+    fromPoster();
+    let seen = false;
+    new IntersectionObserver((es) => (seen = es.some((e) => e.isIntersecting))).observe(scr);
+    setInterval(() => {
+      const v = scr.querySelector('video');
+      if (!seen || document.hidden || !v || v.paused || v.readyState < 2 || v.style.opacity !== '1') return;
+      paint(v, v.videoWidth, v.videoHeight);
+    }, 1000);
+  }
+</script>
 
 <style>
   .hero {
@@ -35,6 +110,7 @@ import { tone } from '../../lib/site';
     overflow: hidden;
   }
   .hero__col {
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -92,25 +168,95 @@ import { tone } from '../../lib/site';
     border: 1px solid var(--hairS);
     color: var(--ink);
   }
+  /* Устройство вокруг ролика (SITE-51). Корпус по теме (тёмная — Space Black, светлая — серебро), рамка экрана всегда
+     чёрная; полосы экрана — --vtop / --vbot (край кадра в экране, скрипт ниже), до них — --vbg, край кадра-обложки
+     своей темы (снят с hero-*.webp: тёмная #030718, светлая #eff1f7). */
   .hero__fig {
+    --case: #34363b;
+    --case-hi: #5b5e64;
+    --case-lo: #17181b;
+    --vbg: #030718;
+    --vink: #f2f4fa;
+    --dsh: 0 2.4cqw 5cqw -2.4cqw rgb(0 0 0 / 0.75);
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     margin: clamp(32px, 5vw, 64px) 0 0;
     width: 100%;
     max-width: 1200px;
-    padding: clamp(6px, 0.9vw, 12px);
-    border-radius: 20px;
-    background: var(--surf);
-    border: 1px solid var(--hairS);
-    box-shadow: var(--shadow);
+  }
+  :global(html[data-theme='light']) .hero__fig {
+    --case: #d3d5d9;
+    --case-hi: #f4f5f7;
+    --case-lo: #9ea2a8;
+    --vbg: #eff1f7;
+    --vink: #0b1020;
+    --dsh: 0 2.4cqw 5cqw -2.4cqw rgb(20 30 60 / 0.4);
   }
   .hero__fig[hidden] {
     display: none;
   }
+  .hero__fig > * {
+    flex-shrink: 0;
+  }
+  /* ≥ 1180: высота MacBook (0,603875 ширины) дополняется так, чтобы обложка выросла ровно на целое число пикселей против
+     прежней рамки (ширина W, поля clamp(6px, .9vw, 12px), рамка 1px, экран 16:9; доли — шагом вёрстки 1/64 px), — всё ниже обложки не сдвигается
+     на доли пикселя (сверка десктопа «ниже обложки 0 px»). */
+  @media (min-width: 1180px) {
+    .hero__fig {
+      --w: min(100cqw, 1200px);
+      --p: round(down, clamp(6px, 0.9vw, 12px), 0.015625px);
+      --was: calc(round(down, (var(--w) - 2 * var(--p) - 2px) * 9 / 16, 0.015625px) + 2 * var(--p) + 2px);
+      height: calc(var(--was) + round(up, var(--w) * 0.603875 - var(--was), 1px));
+    }
+  }
+  /* MacBook (≥ 1180): крышка 90 % рамки, экран 16:10, ролик 16:9 во всю ширину, «чёлка» — в верхней полосе */
+  .dev__lid {
+    position: relative;
+    box-sizing: border-box;
+    width: 90%;
+    padding: 1.4cqw 1.4cqw 1.7cqw;
+    border: max(1px, 0.25cqw) solid var(--case);
+    border-radius: 2.4cqw 2.4cqw 0.7cqw 0.7cqw;
+    background: #060607;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06), var(--dsh);
+  }
+  .dev__glass {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    aspect-ratio: 16/10;
+    border-radius: 0.8cqw 0.8cqw 0 0;
+    background: var(--vbg);
+  }
+  .dev__glass::before,
+  .dev__glass::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: var(--vtop, var(--vbg));
+  }
+  .dev__glass::before {
+    top: 0;
+    bottom: 50%;
+  }
+  .dev__glass::after {
+    top: 50%;
+    bottom: 0;
+    background: var(--vbot, var(--vbg));
+  }
   .hero__screen {
     position: relative;
+    z-index: 1;
+    flex: none;
+    width: 100%;
     overflow: hidden;
-    border-radius: 12px;
     aspect-ratio: 16/9;
-    background: var(--bg);
+    background: var(--vbg);
   }
   .hero__poster {
     position: absolute;
@@ -126,20 +272,291 @@ import { tone } from '../../lib/site';
     position: absolute;
     inset: 0;
   }
+  .dev__notch {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 50%;
+    width: 7cqw;
+    height: 2.2cqw;
+    translate: -50% 0;
+    border-radius: 0 0 0.7cqw 0.7cqw;
+    background: #060607;
+  }
+  .dev__notch::after,
+  .dev__cam {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0.55cqw;
+    height: 0.55cqw;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #3a4a6a, #10141d 60%);
+  }
+  .dev__keys,
+  .dev__cam,
+  .dev__bar,
+  .dev__home {
+    display: none;
+  }
+  .dev__hinge {
+    display: block;
+    width: 80%;
+    height: 0.5cqw;
+    border-radius: 0 0 0.5cqw 0.5cqw;
+    background: linear-gradient(#000, var(--case-lo));
+  }
+  /* основа корпуса: шире крышки, высота ≈ 2 % ширины, выемка-«палец» по центру переднего края, мягкая тень */
+  .dev__base {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 2.1cqw;
+    border-radius: 0.3cqw 0.3cqw 4cqw 4cqw / 0.3cqw 0.3cqw 1.8cqw 1.8cqw;
+    background: linear-gradient(var(--case-hi) 0, var(--case) 24%, var(--case) 55%, var(--case-lo) 100%);
+  }
+  .dev__base::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 12cqw;
+    height: 0.75cqw;
+    translate: -50% 0;
+    border-radius: 0 0 1.2cqw 1.2cqw / 0 0 0.75cqw 0.75cqw;
+    background: linear-gradient(var(--case-lo), var(--case));
+  }
+  .dev__base::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 4%;
+    right: 4%;
+    height: 1.6cqw;
+    background: radial-gradient(50% 100% at 50% 0, rgb(0 0 0 / 0.32), transparent);
+  }
+  /* строка состояния и полоска «домой» (iPad, iPhone) — цветом текста темы на фоне ролика */
+  .dev__bar {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    align-items: center;
+    color: var(--vink);
+    font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .dev__ico {
+    display: block;
+    width: auto;
+    fill: currentColor;
+  }
+  .dev__home {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    translate: -50% 0;
+    border-radius: 9999px;
+    background: var(--vink);
+  }
+  .dev__keys i {
+    position: absolute;
+    display: block;
+    background: linear-gradient(90deg, var(--case-lo), var(--case-hi) 50%, var(--case-lo));
+  }
+  /* iPad (768–1179) альбомно: ровная рамка, экран 2360:1640, камера на длинной стороне */
+  @media (min-width: 768px) and (max-width: 1179.98px) {
+    .hero__fig {
+      max-width: 920px;
+    }
+    .dev__lid {
+      width: 100%;
+      padding: 2.5cqw;
+      border-width: max(1.5px, 0.5cqw);
+      border-radius: 4.2cqw;
+    }
+    .dev__glass {
+      aspect-ratio: 2360/1640;
+      border-radius: 1.9cqw;
+    }
+    .dev__notch,
+    .dev__hinge,
+    .dev__base {
+      display: none;
+    }
+    .dev__cam {
+      top: 1.25cqw;
+      display: block;
+      width: 0.75cqw;
+      height: 0.75cqw;
+    }
+    .dev__bar {
+      top: 0;
+      display: flex;
+      justify-content: space-between;
+      height: 3.4cqw;
+      padding: 0 2.6cqw;
+      font-size: 1.3cqw;
+    }
+    .dev__ico {
+      height: 1.05cqw;
+    }
+    .dev__home {
+      display: block;
+      bottom: 1.1cqw;
+      width: 17cqw;
+      height: 0.5cqw;
+    }
+    .dev__keys {
+      position: absolute;
+      inset: 0;
+      display: block;
+    }
+    .dev__keys i:nth-child(1) {
+      top: calc(-0.5cqw - 0.55cqw);
+      right: 9%;
+      width: 6%;
+      height: 0.55cqw;
+      border-radius: 0.3cqw 0.3cqw 0 0;
+      background: linear-gradient(var(--case-hi), var(--case-lo));
+    }
+    .dev__keys i:nth-child(2),
+    .dev__keys i:nth-child(3) {
+      right: calc(-0.5cqw - 0.55cqw);
+      width: 0.55cqw;
+      height: 8%;
+      border-radius: 0 0.3cqw 0.3cqw 0;
+    }
+    .dev__keys i:nth-child(2) {
+      top: 10%;
+    }
+    .dev__keys i:nth-child(3) {
+      top: 20%;
+    }
+    .dev__keys i:nth-child(4) {
+      display: none;
+    }
+  }
+  /* iPhone (< 768): экран 9:19,5, ролик 9:16 во всю ширину, Dynamic Island и строка состояния сверху, «домой» снизу */
   @media (max-width: 767.98px) {
     .hero__fig {
-      max-width: 340px;
+      max-width: 320px;
+    }
+    .dev__lid {
+      width: 100%;
+      padding: 3cqw;
+      border-width: max(1.5px, 0.9cqw);
+      border-radius: 15.5cqw;
+    }
+    .dev__glass {
+      aspect-ratio: 9/19.5;
+      border-radius: 11.6cqw;
     }
     .hero__screen {
       aspect-ratio: 9/16;
     }
+    .dev__hinge,
+    .dev__base {
+      display: none;
+    }
+    .dev__notch {
+      top: 2.6cqw;
+      width: 29.6cqw;
+      height: 8.7cqw;
+      border-radius: 9999px;
+      background: #000;
+    }
+    .dev__notch::after {
+      left: auto;
+      right: 3.2cqw;
+      width: 2.6cqw;
+      height: 2.6cqw;
+      translate: 0 -50%;
+    }
+    .dev__bar {
+      top: 2.6cqw;
+      display: grid;
+      grid-template-columns: 1fr 29.6cqw 1fr;
+      justify-items: center;
+      height: 8.7cqw;
+      font-size: 3.9cqw;
+    }
+    .dev__ico {
+      grid-column: 3;
+      height: 2.9cqw;
+    }
+    .dev__home {
+      display: block;
+      bottom: 2.2cqw;
+      width: 31.4cqw;
+      height: 1.25cqw;
+    }
+    .dev__keys {
+      position: absolute;
+      inset: 0;
+      display: block;
+    }
+    .dev__keys i {
+      width: 0.8cqw;
+    }
+    .dev__keys i:nth-child(-n + 3) {
+      left: calc(-0.9cqw - 0.8cqw);
+      border-radius: 0.4cqw 0 0 0.4cqw;
+    }
+    .dev__keys i:nth-child(1) {
+      top: 17%;
+      height: 5.5%;
+    }
+    .dev__keys i:nth-child(2) {
+      top: 26%;
+      height: 10%;
+    }
+    .dev__keys i:nth-child(3) {
+      top: 38.5%;
+      height: 10%;
+    }
+    .dev__keys i:nth-child(4) {
+      right: calc(-0.9cqw - 0.8cqw);
+      top: 29%;
+      height: 15%;
+      border-radius: 0 0.4cqw 0.4cqw 0;
+    }
   }
-  /* Ролика сочетания нет — снимок блока (heroPanel 'shot' прототипа): рамка 1200, снимок 2:1, cover, top — и на телефоне. */
+  /* Ролика сочетания нет — снимок блока (heroPanel 'shot' прототипа): прежняя рамка 1200, снимок 2:1, cover, top —
+     и на телефоне; устройства нет. */
   .hero__fig.is-shot {
+    display: block;
+    height: auto;
     max-width: 1200px;
+    padding: clamp(6px, 0.9vw, 12px);
+    border-radius: 20px;
+    background: var(--surf);
+    border: 1px solid var(--hairS);
+    box-shadow: var(--shadow);
+  }
+  .is-shot .dev__lid,
+  .is-shot .dev__glass {
+    display: contents;
+  }
+  .is-shot .dev__glass::before,
+  .is-shot .dev__glass::after,
+  .is-shot .dev__keys,
+  .is-shot .dev__cam,
+  .is-shot .dev__notch,
+  .is-shot .dev__bar,
+  .is-shot .dev__home,
+  .is-shot .dev__hinge,
+  .is-shot .dev__base {
+    display: none;
   }
   .is-shot .hero__screen {
+    border-radius: 12px;
     aspect-ratio: 2/1;
+    background: var(--bg);
   }
   .is-shot .hero__poster {
     object-position: top;

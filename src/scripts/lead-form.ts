@@ -2,7 +2,7 @@
 // в состоянии только «сеть» и степпер. Проверка — правила дизайна (src/lib/lead.ts, checkDesignLead), сообщения —
 // словарь сочетания. Режимы сборки: local — стенд трекера (8890), preview — ничего не отправляет, prod — адрес сборки.
 import { axes, onAxes, type PageData } from './state';
-import { checkDesignLead, designBody, newRequestRef, outcomeOf, utmOf, pageOf, type DesignErrors, type DesignLead } from '../lib/lead';
+import { checkDesignLead, designBody, designPhoneShown, newRequestRef, outcomeOf, utmOf, pageOf, type DesignErrors, type DesignLead, type LeadCur } from '../lib/lead';
 
 const FIELDS = ['name', 'phone', 'city', 'company'] as const;
 
@@ -23,6 +23,7 @@ export function initLeadForm(D: PageData) {
   let err: DesignErrors = {};
   let sendErr: string | null = null;
   let last: DesignLead | null = null;
+  let lastCur: LeadCur = 'rub';
   let busy = false;
 
   const dict = () => {
@@ -54,7 +55,7 @@ export function initLeadForm(D: PageData) {
   function paintDone() {
     if (!last) return;
     const L = dict();
-    const fill = (t: string) => t.replace('{name}', last!.name.trim()).replace('{phone}', last!.phone.trim());
+    const fill = (t: string) => t.replace('{name}', last!.name.trim()).replace('{phone}', designPhoneShown(lastCur, last!.phone));
     done!.querySelector('[data-done-title]')!.textContent = fill(L.doneTitle);
     done!.querySelector('[data-done-text]')!.textContent = fill(L.doneText);
   }
@@ -98,7 +99,7 @@ export function initLeadForm(D: PageData) {
       chain: chainCb.checked,
       locations: loc.value,
     };
-    err = checkDesignLead(v);
+    err = checkDesignLead(v, axes().cur);
     sendErr = null;
     paintErrors();
     const bad = (['name', 'phone', 'city', 'company', 'locations'] as const).find((k) => err[k]);
@@ -137,6 +138,7 @@ export function initLeadForm(D: PageData) {
       }
     }
     last = v;
+    lastCur = a.cur;
     requestRef = newRequestRef();
     dispatchEvent(new CustomEvent('vilax:lead', { detail: { stage: 'sent' } }));
     paintDone();

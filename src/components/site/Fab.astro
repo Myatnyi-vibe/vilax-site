@@ -29,4 +29,10 @@ import { tone } from '../../lib/site';
   .fab[hidden] {
     display: none;
   }
+  /* Планшет: «Запросить демо» всегда в шапке, плавающая кнопка закрывает текст (решение Данила Q-1, SITE-46) */
+  @media (min-width: 768px) and (max-width: 1179.98px) {
+    .fab {
+      display: none;
+    }
+  }
 </style>

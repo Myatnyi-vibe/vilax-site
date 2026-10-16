@@ -58,6 +58,19 @@ const last = steps.length - 1;
       grid-template-columns: 1fr;
     }
   }
+  /* Планшет-портрет: пять колонок по ~110 px рвали заголовки — шаги 3 + 2 на всю ширину (SITE-42, P1-4) */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    .ob__steps {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      row-gap: 32px;
+    }
+    .ob__step {
+      grid-column: span 2;
+    }
+    .ob__step:nth-child(n + 4) {
+      grid-column: span 3;
+    }
+  }
   .ob__step {
     display: flex;
     flex-direction: column;
